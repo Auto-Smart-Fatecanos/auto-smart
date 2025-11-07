@@ -13,6 +13,8 @@ $ npx prisma generate
 # Rode o servidor em ambinte de teste
 $ npm run start:dev
 
+# Populando o banco de dados
+
 # Para ver as tabelas do banco de dados com o prisma studio
 $ npx prisma studio
 ```

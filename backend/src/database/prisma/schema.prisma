@@ -41,28 +41,30 @@ model Cliente {
   orcamentos Orcamento[]
 }
 
+model Orcamento {
+  id             Int             @id @default(autoincrement())
+  clienteId      Int
+  placa          String
+  modelo         String
+  status         Status          @default(AGUARDANDO)
+  dataCriacao    DateTime        @default(now())
+  cliente        Cliente         @relation(fields: [clienteId], references: [id])
+  orcamentoItems OrcamentoItem[]
+}
+
 model OrcamentoItem {
   id             Int           @id @default(autoincrement())
+  descricao      String
   tipoOrcamento  TipoOrcamento
   orcamentoValor Float
-  orcamentos     Orcamento[]
+  orcamentoId    Int
+  ativo          Boolean       @default(true)
+  orcamento      Orcamento     @relation(fields: [orcamentoId], references: [id])
 }
 
 enum TipoOrcamento {
   SERVICO
   PECA
-}
-
-model Orcamento {
-  id              Int           @id @default(autoincrement())
-  clienteId       Int
-  orcamentoItemId Int
-  placa           String
-  modelo          String
-  status          Status // Formatei usando Enum aleluia amem
-  dataCriacao     DateTime      @default(now())
-  cliente         Cliente       @relation(fields: [clienteId], references: [id])
-  orcamentoItem   OrcamentoItem @relation(fields: [orcamentoItemId], references: [id])
 }
 
 enum Status {

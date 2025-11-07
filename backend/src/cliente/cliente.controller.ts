@@ -19,7 +19,7 @@ export class ClienteController {
 
   @Post()
   async create(
-    @Body() data: { nome: string; cpf: string; telefone: string }
+    @Body() data: { nome: string; cpf: string; telefone: string },
   ): Promise<Cliente> {
     return this.clienteService.create(data);
   }
@@ -37,7 +37,7 @@ export class ClienteController {
   @Put(':id')
   async update(
     @Param('id') id: string,
-    @Body() data: Partial<{ nome: string; cpf: string; telefone: string }>
+    @Body() data: Partial<{ nome: string; cpf: string; telefone: string }>,
   ): Promise<Cliente> {
     return this.clienteService.update(Number(id), data);
   }

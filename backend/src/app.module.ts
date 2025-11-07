@@ -7,7 +7,6 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { ClienteModule } from './cliente/cliente.module';
 import { OrcamentoModule } from './orcamento/orcamento.module';
-import { OrcamentoItemModule } from './orcamento_item/orcamento_item.module';
 
 @Module({
   imports: [
@@ -16,10 +15,8 @@ import { OrcamentoItemModule } from './orcamento_item/orcamento_item.module';
     UserModule,
     ClienteModule,
     OrcamentoModule,
-    OrcamentoItemModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
-

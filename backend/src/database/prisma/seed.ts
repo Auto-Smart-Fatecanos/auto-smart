@@ -9,8 +9,11 @@ const prisma = new PrismaClient();
 
 async function main() {
   // data cleanup
-  // await prisma.user.deleteMany();
-  // await prisma.store.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.store.deleteMany();
+  await prisma.orcamentoItem.deleteMany();
+  await prisma.orcamento.deleteMany();
+  await prisma.cliente.deleteMany();
 
   //create a store
   const store = await prisma.store.create({
@@ -35,7 +38,51 @@ async function main() {
     },
   });
 
-  console.log({ store, user });
+  const cliente = await prisma.cliente.create({
+    data: {
+      nome: 'João da Silva',
+      cpf: '12345678900',
+      telefone: '11999999999',
+    },
+  });
+
+  const orcamento = await prisma.orcamento.create({
+    data: {
+      clienteId: cliente.id,
+      placa: '12345678900',
+      modelo: '12345678900',
+      status: 'AGUARDANDO',
+    },
+  });
+
+  const orcamentoItem = await prisma.orcamentoItem.createMany({
+    data: [
+      {
+        tipoOrcamento: 'SERVICO',
+        orcamentoValor: 100,
+        orcamentoId: orcamento.id,
+        descricao: 'Serviço de manutenção',
+      },
+      {
+        tipoOrcamento: 'SERVICO',
+        orcamentoValor: 200,
+        orcamentoId: orcamento.id,
+        descricao: 'Trocar rolamento',
+      },
+      {
+        tipoOrcamento: 'PECA',
+        orcamentoValor: 200,
+        orcamentoId: orcamento.id,
+        descricao: 'Rolamento 1',
+      },
+      {
+        tipoOrcamento: 'PECA',
+        orcamentoValor: 150,
+        orcamentoId: orcamento.id,
+        descricao: 'Cabo elétrico',
+      },
+    ],
+  });
 }
 
 main()
@@ -43,7 +90,7 @@ main()
     await prisma.$disconnect();
   })
   .catch(async (e) => {
-    console.error('❌ Erro no seed:', e);
+    console.error('Erro no seed:', e);
     await prisma.$disconnect();
     process.exit(1);
   });

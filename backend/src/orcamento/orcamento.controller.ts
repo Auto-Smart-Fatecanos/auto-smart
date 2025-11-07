@@ -4,53 +4,72 @@ import {
   Post,
   Param,
   Body,
-  Put,
   Delete,
-  UseGuards,
+  BadRequestException,
+  Query,
+  // UseGuards,
 } from '@nestjs/common';
 import { OrcamentoService } from './orcamento.service';
-import type { Orcamento } from '@prisma/client';
-import { Status } from '@prisma/client';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import type { Orcamento, OrcamentoItem } from '@prisma/client';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
+import { OrcamentoDto, OrcamentoItensArrayDto } from './orcamento.dto';
+// import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
-@UseGuards(JwtAuthGuard) 
+// @UseGuards(JwtAuthGuard)
 @Controller('orcamentos')
 export class OrcamentoController {
   constructor(private readonly orcamentoService: OrcamentoService) {}
 
   @Post()
-  async create(@Body() data: {
-    clienteId: number;
-    orcamentoItemId: number;
-    placa: string;
-    modelo: string;
-    status: Status;
-  }): Promise<Orcamento> {
-    return this.orcamentoService.create(data);
+  async create(
+    @Body()
+    body,
+  ): Promise<Orcamento & { orcamentoItems: OrcamentoItem[] }> {
+    const { orcamentoItens, ...orcamento } = body;
+
+    console.log(orcamentoItens, orcamento);
+
+    const orcamentoInstance = plainToInstance(OrcamentoDto, orcamento);
+    const orcamentoErrors = await validate(orcamentoInstance, {
+      whitelist: true,
+    });
+
+    if (orcamentoErrors.length > 0) {
+      throw new BadRequestException(orcamentoErrors);
+    }
+
+    const itensInstance = plainToInstance(OrcamentoItensArrayDto, {
+      orcamentoItens: orcamentoItens as OrcamentoItem[],
+    });
+
+    const itensErrors = await validate(itensInstance);
+    if (itensErrors.length > 0) {
+      throw new BadRequestException(itensErrors);
+    }
+
+    return this.orcamentoService.create({
+      orcamento: orcamento as Orcamento,
+      orcamentoItens: orcamentoItens as OrcamentoItem[],
+    });
   }
 
   @Get()
-  async findAll(): Promise<Orcamento[]> {
-    return this.orcamentoService.findAll();
+  async findAll(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+  ): Promise<{
+    data: Orcamento[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    return this.orcamentoService.findAll(Number(page), Number(limit));
   }
 
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<Orcamento | null> {
     return this.orcamentoService.findOne(Number(id));
-  }
-
-  @Put(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() data: Partial<{
-      clienteId: number;
-      orcamentoItemId: number;
-      placa: string;
-      modelo: string;
-      status: Status;
-    }>,
-  ): Promise<Orcamento> {
-    return this.orcamentoService.update(Number(id), data);
   }
 
   @Delete(':id')

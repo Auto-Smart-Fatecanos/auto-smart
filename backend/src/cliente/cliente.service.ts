@@ -6,7 +6,11 @@ import type { Cliente } from '@prisma/client';
 export class ClienteService {
   constructor(private prisma: PrismaService) {}
 
-  async create(data: { nome: string; cpf: string; telefone: string }): Promise<Cliente> {
+  async create(data: {
+    nome: string;
+    cpf: string;
+    telefone: string;
+  }): Promise<Cliente> {
     return this.prisma.cliente.create({ data });
   }
 
@@ -18,10 +22,13 @@ export class ClienteService {
     return this.prisma.cliente.findUnique({ where: { id } });
   }
 
-  async update(id: number, data: { nome?: string; cpf?: string; telefone?: string }): Promise<Cliente> {
+  async update(
+    id: number,
+    data: { nome?: string; cpf?: string; telefone?: string },
+  ): Promise<Cliente> {
     return this.prisma.cliente.update({
       where: { id },
-      data
+      data,
     });
   }
 
@@ -29,4 +36,3 @@ export class ClienteService {
     return this.prisma.cliente.delete({ where: { id } });
   }
 }
-
