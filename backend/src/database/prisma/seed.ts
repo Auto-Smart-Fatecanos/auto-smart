@@ -9,11 +9,11 @@ const prisma = new PrismaClient();
 
 async function main() {
   // data cleanup
+  await prisma.cliente.deleteMany();
   await prisma.user.deleteMany();
   await prisma.store.deleteMany();
-  await prisma.orcamentoItem.deleteMany();
   await prisma.orcamento.deleteMany();
-  await prisma.cliente.deleteMany();
+  await prisma.orcamentoItem.deleteMany();
 
   //create a store
   const store = await prisma.store.create({
@@ -26,7 +26,7 @@ async function main() {
   //create user
   const hashedPassword = await bcrypt.hash('123456', 10);
 
-  const user = await prisma.user.create({
+  await prisma.user.create({
     data: {
       firstName: 'Jonathan',
       lastName: 'Santana',
@@ -41,7 +41,7 @@ async function main() {
   const cliente = await prisma.cliente.create({
     data: {
       nome: 'João da Silva',
-      cpf: '12345678900',
+      cpf: '252.826.040-78',
       telefone: '11999999999',
     },
   });
@@ -55,7 +55,7 @@ async function main() {
     },
   });
 
-  const orcamentoItem = await prisma.orcamentoItem.createMany({
+  await prisma.orcamentoItem.createMany({
     data: [
       {
         tipoOrcamento: 'SERVICO',

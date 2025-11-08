@@ -21,16 +21,17 @@ model Store {
 }
 
 model User {
-  id           Int     @id @default(autoincrement())
+  id           Int         @id @default(autoincrement())
   firstName    String
   lastName     String
-  email        String  @unique
+  email        String      @unique
   password     String
   phoneNumber  String?
-  cpf          String  @unique
+  cpf          String      @unique
   storeId      Int
+  levelAcesso  LevelAcesso @default(USER)
   refreshToken String?
-  store        Store   @relation(fields: [storeId], references: [id])
+  store        Store       @relation(fields: [storeId], references: [id])
 }
 
 model Cliente {
@@ -73,4 +74,9 @@ enum Status {
   REJEITADO
   FINALIZADO
   CANCELADO
+}
+
+enum LevelAcesso {
+  ADMIN
+  USER
 }

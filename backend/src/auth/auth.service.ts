@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { UserService } from '../user/user.service';
 import { User } from '@prisma/client';
- 
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -13,8 +13,8 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.userService.findByEmail(email);
+  async validateUser(cpf: string, password: string): Promise<any> {
+    const user = await this.userService.findByCpf(cpf);
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -29,25 +29,33 @@ export class AuthService {
   }
 
   async login(user: User) {
-    const payload = { email: user.email, sub: user.id };
-    const accessToken = this.jwtService.sign(payload);
+    const payload = { cpf: user.cpf };
+    const accessToken = this.jwtService.sign(payload, {
+      secret: this.configService.get('JWT_SECRET'),
+      expiresIn: this.configService.get('JWT_EXPIRES_IN'),
+    });
 
     const refreshToken = this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_SECRET'),
       expiresIn: '7d',
     });
 
-    await this.userService.updateRefreshToken(user.id, refreshToken);
+    await this.userService.updateRefreshToken(user.cpf, refreshToken);
+
+    const data: Partial<User> = { ...user };
+    delete data.password;
+    delete data.refreshToken;
+    delete data.levelAcesso;
 
     return {
       access_token: accessToken,
       refresh_token: refreshToken,
-      user: user,
+      user: data,
     };
   }
 
-  async refreshAccessToken(userId: number, refreshToken: string) {
-    const user = await this.userService.findById(userId);
+  async refreshAccessToken(cpf: string, refreshToken: string) {
+    const user = await this.userService.findByCpf(cpf);
 
     if (!user || !user.refreshToken) {
       throw new UnauthorizedException('Acesso negado');
@@ -62,7 +70,7 @@ export class AuthService {
       throw new UnauthorizedException('Acesso negado');
     }
 
-    const payload = { email: user.email, sub: user.id };
+    const payload = { cpf: user.cpf };
 
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get('JWT_SECRET'),
@@ -74,8 +82,8 @@ export class AuthService {
     };
   }
 
-  async logout(userId: number) {
-    await this.userService.updateRefreshToken(userId, null);
+  async logout(cpf: string) {
+    await this.userService.updateRefreshToken(cpf, null);
     return { message: 'Logout realizado com sucesso' };
   }
 }

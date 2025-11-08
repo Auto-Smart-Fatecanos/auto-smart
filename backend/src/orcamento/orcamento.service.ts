@@ -32,6 +32,7 @@ export class OrcamentoService {
     });
   }
 
+  //implementar para trazer apenas o da loja atual
   async findAll(
     page: number,
     limit: number,

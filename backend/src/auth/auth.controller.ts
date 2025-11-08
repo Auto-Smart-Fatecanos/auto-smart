@@ -12,13 +12,12 @@ import {
 import { AuthService } from './auth.service';
 import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { IsEmail, IsNotEmpty } from 'class-validator';
+import { IsNotEmpty } from 'class-validator';
 import { User } from '@prisma/client';
 
 export class LoginDto {
-  @IsEmail()
   @IsNotEmpty()
-  email: string;
+  cpf: string;
 
   @IsNotEmpty()
   password: string;
@@ -32,7 +31,7 @@ export class AuthController {
   @HttpCode(200)
   async login(@Body() loginDto: LoginDto) {
     const user: User = await this.authService.validateUser(
-      loginDto.email,
+      loginDto.cpf,
       loginDto.password,
     );
 
@@ -43,31 +42,26 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(200)
   async refresh(@Req() req) {
+    console.log(req.user);
     return this.authService.refreshAccessToken(
-      req.user.sub,
+      req.user.cpf,
       req.user.refreshToken,
     );
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get('hello')
-  getHello(): string {
-    return "{ message: 'Hello World!' }";
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   @HttpCode(200)
   async logout(@Req() req) {
-    const user = req.user as { userId?: number };
+    const user = req.user as { cpf?: string };
 
-    if (!user?.userId) {
+    if (!user?.cpf) {
       throw new HttpException(
-        'User ID not found in request',
+        'User CPF not found in request',
         HttpStatus.UNAUTHORIZED,
       );
     }
-    await this.authService.logout(user.userId);
+    await this.authService.logout(user.cpf);
 
     return { message: 'Logged out successfully' };
   }

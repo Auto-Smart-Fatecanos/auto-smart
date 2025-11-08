@@ -7,6 +7,7 @@ import {
   Delete,
   BadRequestException,
   Query,
+  UseGuards,
   // UseGuards,
 } from '@nestjs/common';
 import { OrcamentoService } from './orcamento.service';
@@ -14,12 +15,16 @@ import type { Orcamento, OrcamentoItem } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { OrcamentoDto, OrcamentoItensArrayDto } from './orcamento.dto';
-// import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { UserService } from 'src/user/user.service';
 
-// @UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('orcamentos')
 export class OrcamentoController {
-  constructor(private readonly orcamentoService: OrcamentoService) {}
+  constructor(
+    private readonly orcamentoService: OrcamentoService,
+    private readonly userService: UserService,
+  ) {}
 
   @Post()
   async create(
