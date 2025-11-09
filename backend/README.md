@@ -14,6 +14,7 @@ $ npx prisma generate
 $ npm run start:dev
 
 # Populando o banco de dados
+$ npm run seed
 
 # Para ver as tabelas do banco de dados com o prisma studio
 $ npx prisma studio
