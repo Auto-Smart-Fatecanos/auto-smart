@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/auth_service.dart';
 import '../../../../core/theme/colors.dart';
@@ -14,11 +15,15 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _cpfController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final FocusNode _emailFocus = FocusNode();
+  final FocusNode _cpfFocus = FocusNode();
   final FocusNode _passwordFocus = FocusNode();
   final AuthService _authService = AuthService();
+  final MaskTextInputFormatter _cpfFormatter = MaskTextInputFormatter(
+    mask: '###.###.###-##',
+    filter: {'#': RegExp(r'\d')},
+  );
   
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -33,9 +38,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     _setupShakeAnimation();
     _loadRememberMe();
     
-    // Auto-focus no email após build
+    // Auto-focus no CPF após build
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _emailFocus.requestFocus();
+      _cpfFocus.requestFocus();
     });
   }
 
@@ -51,17 +56,24 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   }
 
   Future<void> _loadRememberMe() async {
-    // Carregar email salvo se "lembrar-me" estava ativo
+    // Carregar CPF salvo se "lembrar-me" estava ativo
     try {
       final prefs = await SharedPreferences.getInstance();
-      final savedEmail = prefs.getString('saved_email');
+      final savedCpf = prefs.getString('saved_cpf');
       final rememberMe = prefs.getBool('remember_me') ?? false;
       
-      if (rememberMe && savedEmail != null) {
+      if (rememberMe && savedCpf != null) {
+        final maskedCpf = _cpfFormatter.maskText(savedCpf);
         setState(() {
-          _emailController.text = savedEmail;
+          _cpfController.text = maskedCpf;
+          _cpfController.selection =
+              TextSelection.collapsed(offset: maskedCpf.length);
           _rememberMe = true;
         });
+        _cpfFormatter.formatEditUpdate(
+          TextEditingValue.empty,
+          TextEditingValue(text: maskedCpf),
+        );
       }
     } catch (e) {
       // Silenciosamente falha se SharedPreferences não estiver disponível
@@ -72,10 +84,10 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     try {
       final prefs = await SharedPreferences.getInstance();
       if (_rememberMe) {
-        await prefs.setString('saved_email', _emailController.text);
+        await prefs.setString('saved_cpf', _cpfFormatter.getUnmaskedText());
         await prefs.setBool('remember_me', true);
       } else {
-        await prefs.remove('saved_email');
+        await prefs.remove('saved_cpf');
         await prefs.setBool('remember_me', false);
       }
     } catch (e) {
@@ -85,26 +97,21 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _cpfController.dispose();
     _passwordController.dispose();
-    _emailFocus.dispose();
+    _cpfFocus.dispose();
     _passwordFocus.dispose();
     _shakeController?.dispose();
     super.dispose();
   }
 
-  String? _validateEmail(String? value) {
+  String? _validateCpf(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Por favor, digite seu email';
+      return 'Por favor, digite seu CPF';
     }
-    
-    // Validação mais robusta de email usando regex
-    final emailRegex = RegExp(
-      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-    );
-    
-    if (!emailRegex.hasMatch(value.trim())) {
-      return 'Por favor, digite um email válido';
+    final numericCpf = value.replaceAll(RegExp(r'\D'), '');
+    if (numericCpf.length != 11) {
+      return 'O CPF deve conter 11 dígitos';
     }
     return null;
   }
@@ -192,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
     try {
     final success = await _authService.login(
-        _emailController.text.trim(),
+      _cpfFormatter.getUnmaskedText(),
       _passwordController.text,
     );
 
@@ -237,7 +244,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         // Erro de autenticação
         HapticFeedback.heavyImpact();
         _triggerShakeAnimation();
-        _showErrorSnackBar('Email ou senha incorretos');
+        _showErrorSnackBar('CPF ou senha incorretos');
       }
     } catch (e) {
       if (!mounted) return;
@@ -248,7 +255,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       // Tratamento específico de erros
       String errorMessage = 'Erro ao fazer login';
       
-      if (e.toString().contains('SocketException') || 
+      if (e.toString().contains('SocketException') ||
           e.toString().contains('NetworkException')) {
         errorMessage = 'Sem conexão com a internet';
       } else if (e.toString().contains('TimeoutException')) {
@@ -421,10 +428,10 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                     ),
                     SizedBox(height: screenHeight * 0.03), // Espaçamento balanceado entre logo e campos
                     
-                    // Email field com acessibilidade
+        // CPF field com acessibilidade
                           Semantics(
-                            label: 'Campo de email',
-                            hint: 'Digite seu endereço de email para fazer login',
+                            label: 'Campo de CPF',
+                            hint: 'Digite seu CPF para fazer login',
                             textField: true,
                             child: Container(
                             decoration: BoxDecoration(
@@ -439,9 +446,10 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                               ],
                             ),
                             child: TextFormField(
-                              controller: _emailController,
-                              focusNode: _emailFocus,
-                      keyboardType: TextInputType.emailAddress,
+                              controller: _cpfController,
+                              focusNode: _cpfFocus,
+                      keyboardType: TextInputType.number,
+                              inputFormatters: [_cpfFormatter],
                               textInputAction: TextInputAction.next,
                               enabled: !_isLoading,
                       style: const TextStyle(
@@ -449,13 +457,13 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                                 color: Colors.black87,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'Email',
+                        hintText: 'CPF',
                         hintStyle: TextStyle(
                                   color: Colors.grey[600],
                                   fontSize: 16,
                                 ),
                                 prefixIcon: Icon(
-                                  Icons.email_outlined,
+                                  Icons.badge_outlined,
                                   color: Colors.grey[700],
                                   size: 22,
                                 ),
@@ -499,7 +507,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                                   height: 0.8,
                                 ),
                               ),
-                              validator: _validateEmail,
+                              validator: _validateCpf,
                               onFieldSubmitted: (_) {
                                 _passwordFocus.requestFocus();
                               },
