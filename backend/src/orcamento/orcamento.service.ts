@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma/prisma.service';
-import { type Orcamento, type OrcamentoItem } from '@prisma/client';
+import { Status, type Orcamento, type OrcamentoItem } from '@prisma/client';
 
 @Injectable()
 export class OrcamentoService {
@@ -66,5 +66,19 @@ export class OrcamentoService {
 
   async remove(id: number): Promise<Orcamento> {
     return this.prisma.orcamento.delete({ where: { id } });
+  }
+
+  async updateStatus(id: number, status: Status): Promise<Orcamento> {
+    const orcamento = await this.findOne(id);
+
+    if (!orcamento) {
+      throw new Error('Orçamento não encontrado');
+    }
+
+    console.log(status);
+    return this.prisma.orcamento.update({
+      where: { id },
+      data: { status },
+    });
   }
 }

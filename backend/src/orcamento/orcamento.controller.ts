@@ -4,14 +4,13 @@ import {
   Post,
   Param,
   Body,
-  Delete,
   BadRequestException,
   Query,
   UseGuards,
-  // UseGuards,
+  Patch,
 } from '@nestjs/common';
 import { OrcamentoService } from './orcamento.service';
-import type { Orcamento, OrcamentoItem } from '@prisma/client';
+import { Status, type Orcamento, type OrcamentoItem } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { OrcamentoDto, OrcamentoItensArrayDto } from './orcamento.dto';
@@ -72,13 +71,11 @@ export class OrcamentoController {
     return this.orcamentoService.findAll(Number(page), Number(limit));
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string): Promise<Orcamento | null> {
-    return this.orcamentoService.findOne(Number(id));
-  }
-
-  @Delete(':id')
-  async remove(@Param('id') id: string): Promise<Orcamento> {
-    return this.orcamentoService.remove(Number(id));
+  @Patch(':id/status')
+  async updateStatus(@Param('id') id: number, @Body('status') status: Status) {
+    if (status === undefined) {
+      throw new BadRequestException('Status é obrigatório');
+    }
+    return this.orcamentoService.updateStatus(id, status);
   }
 }
