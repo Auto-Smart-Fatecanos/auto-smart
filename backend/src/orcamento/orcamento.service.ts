@@ -28,7 +28,7 @@ export class OrcamentoService {
 
     return this.prisma.orcamento.findUniqueOrThrow({
       where: { id: created.id },
-      include: { orcamentoItems: true },
+      include: { orcamentoItems: true, cliente: true },
     });
   }
 
