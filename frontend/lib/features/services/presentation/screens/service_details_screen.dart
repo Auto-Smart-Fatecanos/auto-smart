@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/widgets/custom_app_bar.dart';
 import '../../../../core/theme/colors.dart';
 import '../../../checkin/presentation/screens/checkin_screen.dart';
+import '../../../orcamentos/model/orcamento_item_model.dart';
 
 class ServiceDetailsScreen extends StatelessWidget {
   final String id;
@@ -10,10 +11,8 @@ class ServiceDetailsScreen extends StatelessWidget {
   final String phone;
   final String status;
   final Color statusColor;
-  final String partName;
-  final String partValue;
-  final String serviceType;
-  final String serviceValue;
+  final List<OrcamentoItemModel> pecas;
+  final List<OrcamentoItemModel> servicos;
 
   const ServiceDetailsScreen({
     super.key,
@@ -23,10 +22,8 @@ class ServiceDetailsScreen extends StatelessWidget {
     required this.phone,
     required this.status,
     required this.statusColor,
-    required this.partName,
-    required this.partValue,
-    required this.serviceType,
-    required this.serviceValue,
+    required this.pecas,
+    required this.servicos,
   });
 
   @override
@@ -41,143 +38,143 @@ class ServiceDetailsScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
-                    spreadRadius: 0,
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: AppColors.secondary,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.directions_car,
-                          color: AppColors.textSecondary,
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              title,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.person,
-                                  size: 16,
-                                  color: AppColors.textSecondary,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  clientName,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.phone,
-                        size: 16,
-                        color: AppColors.textSecondary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        phone,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
-                    spreadRadius: 0,
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '#$id',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: statusColor,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      status,
-                      style: const TextStyle(
-                        color: AppColors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+           children: [
+             Container(
+               padding: const EdgeInsets.all(20),
+               decoration: BoxDecoration(
+                 color: AppColors.white,
+                 borderRadius: BorderRadius.circular(12),
+                 boxShadow: [
+                   BoxShadow(
+                     color: Colors.grey.withOpacity(0.1),
+                     spreadRadius: 0,
+                     blurRadius: 10,
+                     offset: const Offset(0, 2),
+                   ),
+                 ],
+               ),
+               child: Stack(
+                 children: [
+                   Column(
+                     crossAxisAlignment: CrossAxisAlignment.start,
+                     children: [
+                       Row(
+                         crossAxisAlignment: CrossAxisAlignment.start,
+                         children: [
+                           Container(
+                             width: 75,
+                             height: 75,
+                             decoration: BoxDecoration(
+                               color: AppColors.secondary,
+                               borderRadius: BorderRadius.circular(8),
+                             ),
+                             child: const Icon(
+                               Icons.directions_car,
+                               color: AppColors.textSecondary,
+                               size: 40,
+                             ),
+                           ),
+                           const SizedBox(width: 12),
+                           Expanded(
+                             child: Column(
+                               crossAxisAlignment: CrossAxisAlignment.start,
+                               children: [
+                                 Row(
+                                   crossAxisAlignment: CrossAxisAlignment.start,
+                                   children: [
+                                     Expanded(
+                                       child: Text(
+                                         title,
+                                         style: const TextStyle(
+                                           fontSize: 20,
+                                           fontWeight: FontWeight.bold,
+                                           color: AppColors.textPrimary,
+                                         ),
+                                       ),
+                                     ),
+                                     const SizedBox(width: 8),
+                                     Container(
+                                       padding: const EdgeInsets.symmetric(
+                                         horizontal: 12,
+                                         vertical: 6,
+                                       ),
+                                       decoration: BoxDecoration(
+                                         color: statusColor,
+                                         borderRadius: BorderRadius.circular(16),
+                                       ),
+                                       child: Text(
+                                         status,
+                                         style: const TextStyle(
+                                           color: AppColors.white,
+                                           fontSize: 12,
+                                           fontWeight: FontWeight.w600,
+                                         ),
+                                       ),
+                                     ),
+                                   ],
+                                 ),
+                                 const SizedBox(height: 12),
+                                 Row(
+                                   children: [
+                                     const Icon(
+                                       Icons.person,
+                                       size: 16,
+                                       color: AppColors.textSecondary,
+                                     ),
+                                     const SizedBox(width: 6),
+                                     Expanded(
+                                       child: Text(
+                                         clientName,
+                                         style: const TextStyle(
+                                           fontSize: 14,
+                                           color: AppColors.textSecondary,
+                                         ),
+                                       ),
+                                     ),
+                                   ],
+                                 ),
+                                 const SizedBox(height: 8),
+                                 Row(
+                                   children: [
+                                     const Icon(
+                                       Icons.phone,
+                                       size: 16,
+                                       color: AppColors.textSecondary,
+                                     ),
+                                     const SizedBox(width: 6),
+                                     Expanded(
+                                       child: Text(
+                                         phone,
+                                         style: const TextStyle(
+                                           fontSize: 14,
+                                           color: AppColors.textSecondary,
+                                         ),
+                                       ),
+                                     ),
+                                   ],
+                                 ),
+                               ],
+                             ),
+                           ),
+                         ],
+                       ),
+                     ],
+                   ),
+                   Positioned(
+                     bottom: 0,
+                     right: 0,
+                     child: Text(
+                       '#$id',
+                       style: const TextStyle(
+                         fontSize: 14,
+                         fontWeight: FontWeight.bold,
+                         color: AppColors.textPrimary,
+                       ),
+                     ),
+                   ),
+                 ],
+               ),
+             ),
             const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.all(20),
@@ -205,105 +202,123 @@ class ServiceDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Nome da Peça:',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              partName,
+                  
+                  // Peças
+                  if (pecas.isNotEmpty) ...[
+                    const Text(
+                      'Peças:',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...pecas.map((peca) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              peca.descricao,
                               style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
                                 color: AppColors.textPrimary,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          const Text(
-                            'Valor:',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
-                            ),
                           ),
-                          const SizedBox(height: 4),
                           Text(
-                            partValue,
+                            'R\$ ${peca.valor.toStringAsFixed(2).replaceAll('.', ',')}',
                             style: const TextStyle(
-                              fontSize: 16,
+                              fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: AppColors.textPrimary,
                             ),
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Tipo de serviço:',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              serviceType,
+                    )),
+                    if (servicos.isNotEmpty) const SizedBox(height: 16),
+                  ],
+                  
+                  // Serviços
+                  if (servicos.isNotEmpty) ...[
+                    const Text(
+                      'Serviços:',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...servicos.map((servico) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              servico.descricao,
                               style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
                                 color: AppColors.textPrimary,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          const Text(
-                            'Valor:',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
-                            ),
                           ),
-                          const SizedBox(height: 4),
                           Text(
-                            serviceValue,
+                            'R\$ ${servico.valor.toStringAsFixed(2).replaceAll('.', ',')}',
                             style: const TextStyle(
-                              fontSize: 16,
+                              fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: AppColors.textPrimary,
                             ),
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                    )),
+                  ],
+                  
+                  // Mensagem quando não há itens
+                  if (pecas.isEmpty && servicos.isEmpty)
+                    const Text(
+                      'Nenhum item cadastrado',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  
+                  // Total
+                  if (pecas.isNotEmpty || servicos.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Total:',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          'R\$ ${(pecas.fold<double>(0, (sum, item) => sum + item.valor) + servicos.fold<double>(0, (sum, item) => sum + item.valor)).toStringAsFixed(2).replaceAll('.', ',')}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

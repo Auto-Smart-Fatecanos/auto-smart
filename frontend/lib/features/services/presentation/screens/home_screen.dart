@@ -224,20 +224,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                         'SERVICO')
                                     .toList();
 
-                                // Get first part and service for details screen
-                                final partName = pecas.isNotEmpty
-                                    ? pecas.first.descricao
-                                    : 'N/A';
-                                final partValue = pecas.isNotEmpty
-                                    ? 'R\$ ${pecas.first.valor.toStringAsFixed(2).replaceAll('.', ',')}'
-                                    : 'R\$ 0,00';
-                                final serviceType = servicos.isNotEmpty
-                                    ? servicos.first.descricao
-                                    : 'N/A';
-                                final serviceValue = servicos.isNotEmpty
-                                    ? 'R\$ ${servicos.first.valor.toStringAsFixed(2).replaceAll('.', ',')}'
-                                    : 'R\$ 0,00';
-
                                 return ServiceCard(
                                   id: orcamento.id?.toString() ?? 'N/A',
                                   title: orcamento.modelo,
@@ -261,10 +247,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                           status: statusMap['text'] as String,
                                           statusColor:
                                               statusMap['color'] as Color,
-                                          partName: partName,
-                                          partValue: partValue,
-                                          serviceType: serviceType,
-                                          serviceValue: serviceValue,
+                                          pecas: pecas,
+                                          servicos: servicos,
                                         ),
                                       ),
                                     );
