@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
 import '../theme/colors.dart';
 
 class RoundedTextField extends StatelessWidget {
@@ -8,6 +10,7 @@ class RoundedTextField extends StatelessWidget {
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
+  final List<TextInputFormatter>? inputFormatters;
   final int? maxLines;
   final bool enabled;
 
@@ -19,6 +22,7 @@ class RoundedTextField extends StatelessWidget {
     this.keyboardType = TextInputType.text,
     this.validator,
     this.onChanged,
+    this.inputFormatters,
     this.maxLines,
     this.enabled = true,
   });
@@ -30,6 +34,7 @@ class RoundedTextField extends StatelessWidget {
       obscureText: obscureText,
       keyboardType: keyboardType,
       onChanged: onChanged,
+      inputFormatters: inputFormatters,
       maxLines: obscureText ? 1 : maxLines,
       enabled: enabled,
       style: const TextStyle(

@@ -14,21 +14,28 @@ import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { IsNotEmpty } from 'class-validator';
 import { User } from '@prisma/client';
+import { ApiProperty, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 export class LoginDto {
+  @ApiProperty({ example: '12345678900' })
   @IsNotEmpty()
   cpf: string;
 
+  @ApiProperty({ example: '123456' })
   @IsNotEmpty()
   password: string;
 }
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('login')
   @HttpCode(200)
+  @ApiOperation({ summary: 'Realiza Operação de login com CPF e senha' })
+  @ApiResponse({ status: 200, description: 'Login realizado com sucesso' })
+  @ApiResponse({ status: 401, description: 'Credenciais inválidas' })
   async login(@Body() loginDto: LoginDto) {
     const user: User = await this.authService.validateUser(
       loginDto.cpf,
@@ -41,8 +48,10 @@ export class AuthController {
   @UseGuards(JwtRefreshGuard)
   @Post('refresh')
   @HttpCode(200)
+  @ApiOperation({ summary: 'Gera novo access token usando refresh token' })
+  @ApiResponse({ status: 200, description: 'Token renovado com sucesso' })
+  @ApiResponse({ status: 401, description: 'Refresh token inválido' })
   async refresh(@Req() req) {
-    console.log(req.user);
     return this.authService.refreshAccessToken(
       req.user.cpf,
       req.user.refreshToken,
@@ -52,6 +61,9 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   @HttpCode(200)
+  @ApiOperation({ summary: 'Invalida o refresh token do usuário' })
+  @ApiResponse({ status: 200, description: 'Logout realizado com sucesso' })
+  @ApiResponse({ status: 401, description: 'Token inválido ou ausente' })
   async logout(@Req() req) {
     const user = req.user as { cpf?: string };
 
@@ -61,6 +73,7 @@ export class AuthController {
         HttpStatus.UNAUTHORIZED,
       );
     }
+
     await this.authService.logout(user.cpf);
 
     return { message: 'Logged out successfully' };

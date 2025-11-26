@@ -1,21 +1,42 @@
 import 'dart:convert';
 import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
-  // Use 10.0.2.2 para Android Emulator, localhost para web/desktop
-  // Para dispositivo físico, use o IP da sua máquina (ex: http://192.168.1.100:3000)
-  static const String baseUrl = 'http://10.0.2.2:3000/auth';
   static const String tokenKey = 'access_token';
   static const String refreshTokenKey = 'refresh_token';
   static const String userDataKey = 'user_data';
+
+  static const String _envApiBaseUrl =
+      String.fromEnvironment('http://127.0.0.1:3000', defaultValue: '');
+
+  static String get _baseApiUrl {
+    if (_envApiBaseUrl.isNotEmpty) {
+      return _envApiBaseUrl;
+    }
+
+    if (kIsWeb) {
+      return 'http://127.0.0.1:3000';
+    }
+
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return 'http://10.0.2.2:3000';
+      default:
+        return 'http://127.0.0.1:3000';
+    }
+  }
+
+  static String get _authUrl => '$_baseApiUrl/auth';
 
   Future<bool> login(String cpf, String password) async {
     try {
       final response = await http
           .post(
-            Uri.parse('$baseUrl/login'),
+            Uri.parse('$_authUrl/login'),
             headers: {'Content-Type': 'application/json'},
             body: json.encode({
               'cpf': cpf,
@@ -23,7 +44,7 @@ class AuthService {
             }),
           )
           .timeout(
-            const Duration(seconds: 10),
+            const Duration(seconds: 30),
             onTimeout: () {
               throw TimeoutException('Tempo de conexão esgotado');
             },
@@ -35,12 +56,11 @@ class AuthService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final prefs = await SharedPreferences.getInstance();
-        
-        // Salvar tokens e dados do usuário
+
         await prefs.setString(tokenKey, data['access_token']);
         await prefs.setString(refreshTokenKey, data['refresh_token']);
         await prefs.setString(userDataKey, json.encode(data['user']));
-        
+
         print('✅ Login bem-sucedido!');
         return true;
       } else if (response.statusCode == 401) {

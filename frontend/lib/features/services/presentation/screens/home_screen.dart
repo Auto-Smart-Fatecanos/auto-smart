@@ -8,6 +8,8 @@ import '../../../earnings/presentation/screens/ganhos_screen.dart';
 import '../../../search/presentation/screens/search_screen.dart';
 import 'service_details_screen.dart';
 import '../../../budget/presentation/screens/budget_screen.dart';
+import '../../../orcamentos/model/orcamento_model.dart';
+import '../../../orcamentos/model/repository/orcamento_repository_impl.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,60 +23,95 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedBottomIndex = 0;
   final List<String> _tabs = ['TODOS', 'PENDENTES', 'APROVADOS'];
 
-  // Mock data for services
-  final List<Map<String, dynamic>> _services = [
-    {
-      'id': '233',
-      'title': 'ARGO TRACKER',
-      'subtitle': 'Luiz Henrique Simionato',
-      'phone': '(19) 99681-6200',
-      'status': 'APROVADO',
-      'statusColor': Colors.green,
-      'partName': 'Cabo',
-      'partValue': 'R\$1200',
-      'serviceType': 'Não sei',
-      'serviceValue': 'R\$1000',
-    },
-    {
-      'id': '133',
-      'title': 'ARGO TRACKER',
-      'subtitle': 'Luiz Henrique Simionato',
-      'phone': '(19) 99484-6200',
-      'status': 'PENDENTE',
-      'statusColor': Colors.orange,
-      'partName': 'Filtro de Ar',
-      'partValue': 'R\$80',
-      'serviceType': 'Troca de Filtro',
-      'serviceValue': 'R\$50',
-    },
-    {
-      'id': '122',
-      'title': 'ARGO TRACKER',
-      'subtitle': 'Luiz Henrique Simionato',
-      'phone': '(19) 99484-6200',
-      'status': 'REPROVADO',
-      'statusColor': Colors.red,
-      'partName': 'Pastilha de Freio',
-      'partValue': 'R\$200',
-      'serviceType': 'Troca de Pastilha',
-      'serviceValue': 'R\$150',
-    },
-  ];
+  // Real data from backend
+  List<OrcamentoModel> _orcamentos = [];
+  bool _isLoading = true;
+  String? _error;
+  final OrcamentoRepositoryImpl _repository = OrcamentoRepositoryImpl();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOrcamentos();
+  }
+
+  // Helper to map backend status to display text and color
+  Map<String, dynamic> _mapStatusToDisplay(String status) {
+    switch (status.toUpperCase()) {
+      case 'AGUARDANDO':
+        return {
+          'text': 'PENDENTE',
+          'color': Colors.orange,
+        };
+      case 'EM_MANUTENCAO':
+        return {
+          'text': 'EM MANUTENÇÃO',
+          'color': Colors.blue,
+        };
+      case 'REJEITADO':
+        return {
+          'text': 'REPROVADO',
+          'color': Colors.red,
+        };
+      case 'FINALIZADO':
+        return {
+          'text': 'FINALIZADO',
+          'color': Colors.green,
+        };
+      case 'CANCELADO':
+        return {
+          'text': 'CANCELADO',
+          'color': Colors.grey,
+        };
+      default:
+        return {
+          'text': status,
+          'color': Colors.grey,
+        };
+    }
+  }
+
+  // Helper to check if status matches filter
+  bool _matchesFilter(String status, int filterIndex) {
+    switch (filterIndex) {
+      case 0: // TODOS
+        return true;
+      case 1: // PENDENTES
+        return status.toUpperCase() == 'AGUARDANDO' ||
+            status.toUpperCase() == 'EM_MANUTENCAO';
+      case 2: // APROVADOS
+        return status.toUpperCase() == 'FINALIZADO';
+      default:
+        return true;
+    }
+  }
+
+  // Load orcamentos from backend
+  Future<void> _loadOrcamentos() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final orcamentos = await _repository.findAll(page: 1, limit: 100);
+      setState(() {
+        _orcamentos = orcamentos;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Erro ao carregar orçamentos: ${e.toString()}';
+        _isLoading = false;
+      });
+    }
+  }
 
   // Method to filter services based on selected tab
-  List<Map<String, dynamic>> get _filteredServices {
-    switch (_selectedTabIndex) {
-      case 0: // TODOS
-        return _services;
-      case 1: // PENDENTES
-        return _services.where((service) => 
-          service['status'] == 'PENDENTE').toList();
-      case 2: // APROVADOS
-        return _services.where((service) => 
-          service['status'] == 'APROVADO').toList();
-      default:
-        return _services;
-    }
+  List<OrcamentoModel> get _filteredOrcamentos {
+    return _orcamentos
+        .where((orcamento) => _matchesFilter(orcamento.status, _selectedTabIndex))
+        .toList();
   }
 
   @override
@@ -135,40 +172,95 @@ class _HomeScreenState extends State<HomeScreen> {
           
           // Services List
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: _filteredServices.length,
-              itemBuilder: (context, index) {
-                final service = _filteredServices[index];
-                return ServiceCard(
-                  id: service['id'],
-                  title: service['title'],
-                  subtitle: service['subtitle'],
-                  phone: service['phone'],
-                  status: service['status'],
-                  statusColor: service['statusColor'],
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ServiceDetailsScreen(
-                          id: service['id'],
-                          title: service['title'],
-                          clientName: service['subtitle'],
-                          phone: service['phone'],
-                          status: service['status'],
-                          statusColor: service['statusColor'],
-                          partName: service['partName'],
-                          partValue: service['partValue'],
-                          serviceType: service['serviceType'],
-                          serviceValue: service['serviceValue'],
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : _error != null
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _error!,
+                              style: const TextStyle(color: Colors.red),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: _loadOrcamentos,
+                              child: const Text('Tentar novamente'),
+                            ),
+                          ],
                         ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+                      )
+                    : _filteredOrcamentos.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'Nenhum orçamento encontrado',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          )
+                        : RefreshIndicator(
+                            onRefresh: _loadOrcamentos,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              itemCount: _filteredOrcamentos.length,
+                              itemBuilder: (context, index) {
+                                final orcamento = _filteredOrcamentos[index];
+                                final statusMap =
+                                    _mapStatusToDisplay(orcamento.status);
+                                
+                                // Separate items by type
+                                final pecas = orcamento.orcamentoItems
+                                    .where((item) =>
+                                        item.tipoOrcamento.toUpperCase() ==
+                                        'PECA')
+                                    .toList();
+                                final servicos = orcamento.orcamentoItems
+                                    .where((item) =>
+                                        item.tipoOrcamento.toUpperCase() ==
+                                        'SERVICO')
+                                    .toList();
+
+                                return ServiceCard(
+                                  id: orcamento.id?.toString() ?? 'N/A',
+                                  title: orcamento.modelo,
+                                  subtitle: orcamento.cliente?.nome ??
+                                      'Cliente não informado',
+                                  phone: orcamento.cliente?.telefone ?? 'N/A',
+                                  status: statusMap['text'] as String,
+                                  statusColor: statusMap['color'] as Color,
+                                  onTap: () async {
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ServiceDetailsScreen(
+                                          id: orcamento.id?.toString() ?? 'N/A',
+                                          title: orcamento.modelo,
+                                          clientName: orcamento.cliente?.nome ??
+                                              'Cliente não informado',
+                                          phone: orcamento.cliente?.telefone ??
+                                              'N/A',
+                                          status: statusMap['text'] as String,
+                                          statusColor:
+                                              statusMap['color'] as Color,
+                                          pecas: pecas,
+                                          servicos: servicos,
+                                        ),
+                                      ),
+                                    );
+                                    
+                                    if (result == true) {
+                                      _loadOrcamentos();
+                                    }
+                                  },
+                                );
+                              },
+                            ),
+                          ),
           ),
         ],
       ),

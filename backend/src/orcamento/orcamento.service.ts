@@ -49,7 +49,7 @@ export class OrcamentoService {
         skip,
         take: limit,
         orderBy: { id: 'desc' },
-        include: { orcamentoItems: true },
+        include: { orcamentoItems: true, cliente: true },
       }),
       this.prisma.orcamento.count(),
     ]);
@@ -65,7 +65,15 @@ export class OrcamentoService {
   }
 
   async remove(id: number): Promise<Orcamento> {
-    return this.prisma.orcamento.delete({ where: { id } });
+    return this.prisma.$transaction(async (tx) => {
+      // Primeiro delta os itens do orçamento ---------
+      await tx.orcamentoItem.deleteMany({
+        where: { orcamentoId: id },
+      });
+
+      // Depois delata o orçamento --------
+      return tx.orcamento.delete({ where: { id } });
+    });
   }
 
   async updateStatus(id: number, status: Status): Promise<Orcamento> {
