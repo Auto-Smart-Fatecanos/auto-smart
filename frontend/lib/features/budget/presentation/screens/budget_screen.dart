@@ -46,6 +46,10 @@ class _BudgetScreenState extends State<BudgetScreen> {
     mask: '###.###.###-##',
     filter: {'#': RegExp(r'[0-9]')},
   );
+  final MaskTextInputFormatter _phoneMask = MaskTextInputFormatter(
+    mask: '(##) #####-####',
+    filter: {'#': RegExp(r'[0-9]')},
+  );
   
   final List<Map<String, TextEditingController>> _partsList = [];
   final List<Map<String, TextEditingController>> _serviceList = [];
@@ -432,7 +436,8 @@ class _BudgetScreenState extends State<BudgetScreen> {
 
     final cpfDigits = _clienteCpf;
     final nome = _clientNameController.text.trim();
-    final telefone = _phoneController.text.trim();
+    final telefoneMasked = _phoneController.text.trim();
+    final telefone = telefoneMasked.replaceAll(RegExp(r'[^0-9]'), '');
 
     if (cpfDigits == null || cpfDigits.length != 11) {
       throw Exception('CPF inválido para criar o cliente.');
@@ -507,7 +512,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
         _clienteId = cliente.id;
         _clienteLoaded = cliente;
         _clientNameController.text = cliente.nome;
-        _phoneController.text = cliente.telefone;
+        _phoneController.text = _phoneMask.maskText(cliente.telefone);
       });
     } catch (e) {
       if (!mounted) return;
@@ -648,6 +653,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
                               label: 'Telefone',
                               controller: _phoneController,
                               keyboardType: TextInputType.phone,
+                              inputFormatters: [_phoneMask],
                             ),
                             const SizedBox(height: 20),
                             RoundedTextField(
