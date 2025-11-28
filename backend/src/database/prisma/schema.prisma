@@ -14,11 +14,13 @@ datasource db {
 }
 
 model Store {
-  id         Int         @id @default(autoincrement())
-  name       String
-  imagePath  String?
-  users      User[]
+  id        Int     @id @default(autoincrement())
+  name      String
+  imagePath String?
+  users     User[]
+
   orcamentos Orcamento[]
+  checklists Checklist[]
 }
 
 model User {
@@ -32,17 +34,18 @@ model User {
   storeId      Int
   levelAcesso  LevelAcesso @default(USER)
   refreshToken String?
-
-  store Store @relation(fields: [storeId], references: [id])
+  store        Store       @relation(fields: [storeId], references: [id])
 
   orcamentos Orcamento[]
+  checklists Checklist[]
 }
 
 model Cliente {
-  id         Int         @id @default(autoincrement())
-  nome       String
-  cpf        String      @unique
-  telefone   String
+  id       Int    @id @default(autoincrement())
+  nome     String
+  cpf      String @unique
+  telefone String
+
   orcamentos Orcamento[]
 }
 
@@ -62,6 +65,15 @@ model Orcamento {
   cliente       Cliente @relation(fields: [clienteId], references: [id])
 
   orcamentoItems OrcamentoItem[]
+  checklists     Checklist[]
+}
+
+enum Status {
+  AGUARDANDO
+  EXECUTANDO
+  SERVICO_EXTERNO
+  REPROVADO
+  FINALIZADO
 }
 
 model OrcamentoItem {
@@ -71,7 +83,8 @@ model OrcamentoItem {
   orcamentoValor Float
   orcamentoId    Int
   ativo          Boolean       @default(true)
-  orcamento      Orcamento     @relation(fields: [orcamentoId], references: [id])
+
+  orcamento Orcamento @relation(fields: [orcamentoId], references: [id])
 }
 
 enum TipoOrcamento {
@@ -79,15 +92,38 @@ enum TipoOrcamento {
   PECA
 }
 
-enum Status {
-  AGUARDANDO
-  EM_MANUTENCAO
-  SERVICO_EXTERNO
-  REPROVADO
-  FINALIZADO
-}
-
 enum LevelAcesso {
   ADMIN
   USER
+}
+
+enum CheckListType {
+  CHECK_IN
+  CHECK_OUT
+}
+
+model Checklist {
+  id          Int           @id @default(autoincrement())
+  dataCriacao DateTime      @default(now())
+  observacoes String
+  tipo        CheckListType
+
+  orcamentoId Int
+  storeId     Int
+  userId      Int
+
+  orcamento Orcamento @relation(fields: [orcamentoId], references: [id])
+  store     Store     @relation(fields: [storeId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+
+  checklistItems ChekListPhotos[]
+}
+
+model ChekListPhotos {
+  id          Int      @id @default(autoincrement())
+  dataCriacao DateTime @default(now())
+  descricao   String
+  checklistId Int
+
+  checklist Checklist @relation(fields: [checklistId], references: [id])
 }

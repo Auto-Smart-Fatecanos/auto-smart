@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { ClienteModule } from './cliente/cliente.module';
 import { OrcamentoModule } from './orcamento/orcamento.module';
+import { ChecklistModule } from './checklist/checklist.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { OrcamentoModule } from './orcamento/orcamento.module';
     UserModule,
     ClienteModule,
     OrcamentoModule,
+    ChecklistModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -32,3 +32,14 @@ $ npm run start:dev
 # production mode
 $ npm run start:prod
 ```
+## Pendências Back-End
+
+### Geral
+- [ ] Adicionar data_criacao nos models que não tem
+### Cliente
+- [ ] Relacionar tabela com a loja
+- [ ] O CPF pode ser repetido em lojas diferentes
+
+### Orçamento
+- [ ] O orçamento também precisa se relacionar com a loja, permitindo que outros usuários dela também veja eles
+

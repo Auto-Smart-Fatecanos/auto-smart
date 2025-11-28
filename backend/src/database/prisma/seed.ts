@@ -14,6 +14,7 @@ async function main() {
   await prisma.cliente.deleteMany();
   await prisma.user.deleteMany();
   await prisma.store.deleteMany();
+  
 
   //create a store
   const store = await prisma.store.create({
