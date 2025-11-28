@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -17,27 +11,28 @@ model Store {
   id        Int     @id @default(autoincrement())
   name      String
   imagePath String?
-  users     User[]
 
-  orcamentos Orcamento[]
   checklists Checklist[]
+  orcamentos Orcamento[]
+  users      User[]
 }
 
 model User {
-  id           Int         @id @default(autoincrement())
+  id           Int     @id @default(autoincrement())
   firstName    String
   lastName     String
-  email        String      @unique
+  email        String  @unique
   password     String
   phoneNumber  String?
-  cpf          String      @unique
+  cpf          String  @unique
   storeId      Int
-  levelAcesso  LevelAcesso @default(USER)
   refreshToken String?
-  store        Store       @relation(fields: [storeId], references: [id])
 
-  orcamentos Orcamento[]
-  checklists Checklist[]
+  levelAcesso LevelAcesso @default(USER)
+  checklists  Checklist[]
+  orcamentos  Orcamento[]
+
+  store Store @relation(fields: [storeId], references: [id])
 }
 
 model Cliente {
@@ -50,22 +45,53 @@ model Cliente {
 }
 
 model Orcamento {
-  id          Int      @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
+  clienteId   Int
   placa       String
   modelo      String
-  status      Status   @default(AGUARDANDO)
-  dataCriacao DateTime @default(now())
+  dataCriacao DateTime    @default(now())
+  status      Status      @default(AGUARDANDO)
+  storeId     Int
+  criadoPor   Int
+  checklists  Checklist[]
 
-  clienteId Int
-  storeId   Int
-  criadoPor Int
-
-  criadoPorUser User    @relation(fields: [criadoPor], references: [id])
-  store         Store   @relation(fields: [storeId], references: [id])
-  cliente       Cliente @relation(fields: [clienteId], references: [id])
-
+  cliente        Cliente         @relation(fields: [clienteId], references: [id])
+  criadoPorUser  User            @relation(fields: [criadoPor], references: [id])
+  store          Store           @relation(fields: [storeId], references: [id])
   orcamentoItems OrcamentoItem[]
-  checklists     Checklist[]
+}
+
+model OrcamentoItem {
+  id             Int           @id @default(autoincrement())
+  tipoOrcamento  TipoOrcamento
+  orcamentoValor Float
+  orcamentoId    Int
+  ativo          Boolean       @default(true)
+  descricao      String
+  orcamento      Orcamento     @relation(fields: [orcamentoId], references: [id])
+}
+
+model Checklist {
+  id          Int           @id @default(autoincrement())
+  dataCriacao DateTime      @default(now())
+  orcamentoId Int
+  observacoes String
+  tipo        CheckListType
+  storeId     Int
+  userId      Int
+
+  orcamento      Orcamento        @relation(fields: [orcamentoId], references: [id])
+  store          Store            @relation(fields: [storeId], references: [id])
+  user           User             @relation(fields: [userId], references: [id])
+  checklistItems ChekListPhotos[]
+}
+
+model ChekListPhotos {
+  id          Int       @id @default(autoincrement())
+  dataCriacao DateTime  @default(now())
+  checklistId Int
+  path        String
+  checklist   Checklist @relation(fields: [checklistId], references: [id])
 }
 
 enum Status {
@@ -74,17 +100,6 @@ enum Status {
   SERVICO_EXTERNO
   REPROVADO
   FINALIZADO
-}
-
-model OrcamentoItem {
-  id             Int           @id @default(autoincrement())
-  descricao      String
-  tipoOrcamento  TipoOrcamento
-  orcamentoValor Float
-  orcamentoId    Int
-  ativo          Boolean       @default(true)
-
-  orcamento Orcamento @relation(fields: [orcamentoId], references: [id])
 }
 
 enum TipoOrcamento {
@@ -100,30 +115,4 @@ enum LevelAcesso {
 enum CheckListType {
   CHECK_IN
   CHECK_OUT
-}
-
-model Checklist {
-  id          Int           @id @default(autoincrement())
-  dataCriacao DateTime      @default(now())
-  observacoes String
-  tipo        CheckListType
-
-  orcamentoId Int
-  storeId     Int
-  userId      Int
-
-  orcamento Orcamento @relation(fields: [orcamentoId], references: [id])
-  store     Store     @relation(fields: [storeId], references: [id])
-  user      User      @relation(fields: [userId], references: [id])
-
-  checklistItems ChekListPhotos[]
-}
-
-model ChekListPhotos {
-  id          Int      @id @default(autoincrement())
-  dataCriacao DateTime @default(now())
-  descricao   String
-  checklistId Int
-
-  checklist Checklist @relation(fields: [checklistId], references: [id])
 }

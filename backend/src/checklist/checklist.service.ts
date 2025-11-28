@@ -11,7 +11,7 @@ export class ChecklistService {
     data: CreateChecklistDto,
     files: Express.Multer.File[],
     cpf: string,
-  ): Promise<Checklist> {
+  ) {
     try {
       const user = await this.prisma.user.findUnique({
         where: { cpf: cpf },
@@ -68,11 +68,35 @@ export class ChecklistService {
         data: item,
       });
 
-      return result;
+      if (files && files.length > 0) {
+        await this.prisma.chekListPhotos.createMany({
+          data: files.map((file) => ({
+            checklistId: result.id,
+            path: file.filename,
+          })),
+        });
+      }
+      const resultWithItems = await this.prisma.checklist.findUnique({
+        where: { id: result.id },
+        include: { checklistItems: true },
+      });
+
+      return resultWithItems;
     } catch (error) {
       throw new BadRequestException(
         error instanceof Error ? error.message : 'Erro inesperado',
       );
     }
+  }
+
+  async findChekList(id: number): Promise<Checklist[]> {
+    return this.prisma.checklist.findMany({
+      where: {
+        id,
+      },
+      include: {
+        checklistItems: true,
+      },
+    });
   }
 }
