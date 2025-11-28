@@ -26,7 +26,7 @@ async function main() {
   //create user
   const hashedPassword = await bcrypt.hash('123456', 10);
 
-  await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       firstName: 'Jonathan',
       lastName: 'Santana',
@@ -51,7 +51,8 @@ async function main() {
       clienteId: cliente.id,
       placa: '12345678900',
       modelo: '12345678900',
-      status: 'AGUARDANDO',
+      storeId: store.id,
+      criadoPor: user.id,
     },
   });
 

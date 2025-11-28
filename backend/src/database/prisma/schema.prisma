@@ -14,10 +14,11 @@ datasource db {
 }
 
 model Store {
-  id        Int     @id @default(autoincrement())
-  name      String
-  imagePath String?
-  users     User[]
+  id         Int         @id @default(autoincrement())
+  name       String
+  imagePath  String?
+  users      User[]
+  orcamentos Orcamento[]
 }
 
 model User {
@@ -31,7 +32,10 @@ model User {
   storeId      Int
   levelAcesso  LevelAcesso @default(USER)
   refreshToken String?
-  store        Store       @relation(fields: [storeId], references: [id])
+
+  store Store @relation(fields: [storeId], references: [id])
+
+  orcamentos Orcamento[]
 }
 
 model Cliente {
@@ -43,13 +47,20 @@ model Cliente {
 }
 
 model Orcamento {
-  id             Int             @id @default(autoincrement())
-  clienteId      Int
-  placa          String
-  modelo         String
-  status         Status          @default(AGUARDANDO)
-  dataCriacao    DateTime        @default(now())
-  cliente        Cliente         @relation(fields: [clienteId], references: [id])
+  id          Int      @id @default(autoincrement())
+  placa       String
+  modelo      String
+  status      Status   @default(PENDENTE)
+  dataCriacao DateTime @default(now())
+
+  clienteId Int
+  storeId   Int
+  criadoPor Int
+
+  criadoPorUser User    @relation(fields: [criadoPor], references: [id])
+  store         Store   @relation(fields: [storeId], references: [id])
+  cliente       Cliente @relation(fields: [clienteId], references: [id])
+
   orcamentoItems OrcamentoItem[]
 }
 
@@ -69,11 +80,11 @@ enum TipoOrcamento {
 }
 
 enum Status {
-  AGUARDANDO
+  PENDENTE
   EM_MANUTENCAO
-  REJEITADO
+  SERVICO_EXTERNO
+  REPROVADO
   FINALIZADO
-  CANCELADO
 }
 
 enum LevelAcesso {
