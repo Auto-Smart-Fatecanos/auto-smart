@@ -112,7 +112,7 @@ export class OrcamentoService {
 
     return this.prisma.orcamento.update({
       where: { id },
-      data: { status },
+      data: { status: status },
     });
   }
 

@@ -70,10 +70,10 @@ model Orcamento {
 
 enum Status {
   AGUARDANDO
-  EM_MANUTENCAO
-  REJEITADO
+  EXECUTANDO
+  SERVICO_EXTERNO
+  REPROVADO
   FINALIZADO
-  CANCELADO
 }
 
 model OrcamentoItem {
