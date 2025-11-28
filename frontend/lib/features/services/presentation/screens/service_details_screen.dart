@@ -44,19 +44,19 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
   final OrcamentoRepositoryImpl _repository = OrcamentoRepositoryImpl();
 
   final Map<String, String> _statusMap = {
-    'AGUARDANDO': 'PENDENTE',
+    'PENDENTE': 'PENDENTE',
     'EM_MANUTENCAO': 'EM MANUTENÇÃO',
-    'REJEITADO': 'REPROVADO',
+    'REPROVADO': 'REPROVADO',
     'FINALIZADO': 'FINALIZADO',
-    'CANCELADO': 'CANCELADO',
+    'SERVICO_EXTERNO': 'SERVIÇO EXTERNO',
   };
 
   final Map<String, Color> _statusColorMap = {
-    'AGUARDANDO': Colors.orange,
+    'PENDENTE': Colors.orange,
     'EM_MANUTENCAO': Colors.blue,
-    'REJEITADO': Colors.red,
+    'REPROVADO': Colors.red,
     'FINALIZADO': Colors.green,
-    'CANCELADO': Colors.grey,
+    'SERVICO_EXTERNO': Colors.purple,
   };
 
   @override
@@ -105,7 +105,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
 
   Map<String, dynamic> _mapStatusToDisplay(String status) {
     switch (status.toUpperCase()) {
-      case 'AGUARDANDO':
+      case 'PENDENTE':
         return {
           'text': 'PENDENTE',
           'color': Colors.orange,
@@ -115,7 +115,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
           'text': 'EM MANUTENÇÃO',
           'color': Colors.blue,
         };
-      case 'REJEITADO':
+      case 'REPROVADO':
         return {
           'text': 'REPROVADO',
           'color': Colors.red,
@@ -125,10 +125,10 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
           'text': 'FINALIZADO',
           'color': Colors.green,
         };
-      case 'CANCELADO':
+      case 'SERVICO_EXTERNO':
         return {
-          'text': 'CANCELADO',
-          'color': Colors.grey,
+          'text': 'SERVIÇO EXTERNO',
+          'color': Colors.purple,
         };
       default:
         return {
@@ -141,7 +141,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
   String _getStatusKey(String displayStatus) {
     return _statusMap.entries
         .firstWhere((e) => e.value == displayStatus,
-            orElse: () => MapEntry('AGUARDANDO', displayStatus))
+            orElse: () => MapEntry('PENDENTE', displayStatus))
         .key;
   }
 

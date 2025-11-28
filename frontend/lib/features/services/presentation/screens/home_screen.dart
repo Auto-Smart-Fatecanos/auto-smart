@@ -21,9 +21,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedTabIndex = 0;
   int _selectedBottomIndex = 0;
-  final List<String> _tabs = ['TODOS', 'PENDENTES', 'APROVADOS'];
+  final List<String> _tabs = ['PENDENTES', 'EM MANUTENÇÃO', 'FINALIZADOS'];
 
-  // Real data from backend
   List<OrcamentoModel> _orcamentos = [];
   bool _isLoading = true;
   String? _error;
@@ -35,10 +34,9 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadOrcamentos();
   }
 
-  // Helper to map backend status to display text and color
   Map<String, dynamic> _mapStatusToDisplay(String status) {
     switch (status.toUpperCase()) {
-      case 'AGUARDANDO':
+      case 'PENDENTE':
         return {
           'text': 'PENDENTE',
           'color': Colors.orange,
@@ -48,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
           'text': 'EM MANUTENÇÃO',
           'color': Colors.blue,
         };
-      case 'REJEITADO':
+      case 'REPROVADO':
         return {
           'text': 'REPROVADO',
           'color': Colors.red,
@@ -58,10 +56,10 @@ class _HomeScreenState extends State<HomeScreen> {
           'text': 'FINALIZADO',
           'color': Colors.green,
         };
-      case 'CANCELADO':
+      case 'SERVICO_EXTERNO':
         return {
-          'text': 'CANCELADO',
-          'color': Colors.grey,
+          'text': 'SERVIÇO EXTERNO',
+          'color': Colors.purple,
         };
       default:
         return {
@@ -71,22 +69,19 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Helper to check if status matches filter
   bool _matchesFilter(String status, int filterIndex) {
     switch (filterIndex) {
-      case 0: // TODOS
-        return true;
-      case 1: // PENDENTES
-        return status.toUpperCase() == 'AGUARDANDO' ||
-            status.toUpperCase() == 'EM_MANUTENCAO';
+      case 0: // PENDENTES
+        return status.toUpperCase() == 'PENDENTE' || status.toUpperCase() == 'SERVICO_EXTERNO';
+      case 1: // EM MANUTENÇÃO
+        return status.toUpperCase() == 'EM_MANUTENCAO';
       case 2: // APROVADOS
         return status.toUpperCase() == 'FINALIZADO';
       default:
-        return true;
+        return false;
     }
   }
 
-  // Load orcamentos from backend
   Future<void> _loadOrcamentos() async {
     setState(() {
       _isLoading = true;
@@ -107,7 +102,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Method to filter services based on selected tab
   List<OrcamentoModel> get _filteredOrcamentos {
     return _orcamentos
         .where((orcamento) => _matchesFilter(orcamento.status, _selectedTabIndex))
@@ -124,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
-          // Tab Bar with Horizontal Scroll - Minimalist Design
+ 
           Container(
             width: double.infinity,
             height: 50,
@@ -212,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 final statusMap =
                                     _mapStatusToDisplay(orcamento.status);
                                 
-                                // Separate items by type
+                    
                                 final pecas = orcamento.orcamentoItems
                                     .where((item) =>
                                         item.tipoOrcamento.toUpperCase() ==
@@ -289,9 +283,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _selectedBottomIndex = index;
           });
           
-          // Navegação direta - Home (index 0) já está na tela atual
-          
-          // Navegação para a tela de pesquisa quando clicar no ícone de lupa
+
           if (index == 1) {
             Navigator.pushReplacement(
               context,
@@ -299,15 +291,13 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           }
           
-          // Navegar para Meus Ganhos ao clicar no ícone de $ (index 2, antes era 3)
           if (index == 2) {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const GanhosScreen()),
             );
           }
-          
-          // Navegar para Meus Dados ao clicar no ícone de perfil (index 3, antes era 4)
+
           if (index == 3) {
             Navigator.pushReplacement(
               context,
