@@ -86,6 +86,12 @@ export class OrcamentoController {
     return this.orcamentoService.findAll(Number(page), Number(limit));
   }
 
+  @Get(':placa/veiculo')
+  async findByVeiculoPlaca(@Param('placa') placa: string) {
+    const orcamentos = await this.orcamentoService.findByVeiculoPlaca(placa);
+    return orcamentos;
+  }
+
   @Patch(':id/status')
   @ApiOperation({
     summary: 'Atualiza o status de um orçamento',

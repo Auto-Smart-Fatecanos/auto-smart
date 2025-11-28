@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma/prisma.service';
 import { Status, type Orcamento, type OrcamentoItem } from '@prisma/client';
 
@@ -139,6 +139,22 @@ export class OrcamentoService {
       return updated;
     } catch (error: unknown) {
       throw new Error(error as string);
+    }
+  }
+
+  async findByVeiculoPlaca(placa: string): Promise<Orcamento[]> {
+    try {
+      return this.prisma.orcamento.findMany({
+        where: {
+          placa: {
+            contains: placa,
+            mode: 'insensitive',
+          },
+        },
+        include: { orcamentoItems: true, cliente: true },
+      });
+    } catch (error: unknown) {
+      throw new BadRequestException(error);
     }
   }
 }
