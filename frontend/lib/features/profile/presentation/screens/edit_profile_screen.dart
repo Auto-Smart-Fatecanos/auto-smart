@@ -331,11 +331,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   // Seção: Alterar Senha
                   _buildSectionTitle('Alterar Senha (Opcional)'),
                   const SizedBox(height: 8),
-                  Text(
-                    'Deixe em branco para manter a senha atual',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.blue.shade200,
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 20,
+                          color: Colors.blue.shade700,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Deixe os campos de senha em branco para manter a senha atual',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.blue.shade900,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -366,6 +390,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           () => _obscureConfirmarSenha = !_obscureConfirmarSenha);
                     },
                     validator: (value) {
+                      // Só valida se o campo "Nova Senha" foi preenchido
                       if (_novaSenhaController.text.isNotEmpty) {
                         if (value == null || value.isEmpty) {
                           return 'Por favor, confirme a nova senha';

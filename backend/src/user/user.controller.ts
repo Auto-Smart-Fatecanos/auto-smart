@@ -7,7 +7,7 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import { UserDto } from './user.dto';
+import { UserDto, UpdateUserDto } from './user.dto';
 import { User } from '@prisma/client';
 import {
   ApiTags,
@@ -50,10 +50,10 @@ export class UserController {
     status: 404,
     description: 'Usuário não encontrado',
   })
-  @ApiBody({ type: UserDto })
+  @ApiBody({ type: UpdateUserDto })
   async updateUser(
     @Param('id', ParseIntPipe) id: number,
-    @Body() user: UserDto,
+    @Body() user: UpdateUserDto,
   ): Promise<void> {
     return this.userService.updateUser(id, user);
   }

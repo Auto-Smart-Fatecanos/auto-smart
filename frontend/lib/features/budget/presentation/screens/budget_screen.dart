@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/widgets/custom_app_bar.dart';
 import '../../../../core/widgets/rounded_text_field.dart';
@@ -39,6 +40,7 @@ class _BudgetScreenState extends State<BudgetScreen> {
   int? _clienteId;
   bool _isFetchingCliente = false;
   bool _isSaving = false;
+  bool _isSendingWhatsApp = false;
   ClienteModel? _clienteLoaded;
 
   final ClienteApi _clienteApi = ClienteApi();
@@ -482,6 +484,142 @@ class _BudgetScreenState extends State<BudgetScreen> {
     return message.replaceFirst('Exception: ', '');
   }
 
+  Future<void> _sendBudgetViaWhatsApp() async {
+    // Valida se todos os dados necessários estão preenchidos
+    if (!_validateDadosTab()) {
+      _showValidationError('Preencha todos os dados antes de enviar.');
+      return;
+    }
+
+    if (!_validatePecasTab()) {
+      _showValidationError('Adicione pelo menos uma peça antes de enviar.');
+      return;
+    }
+
+    if (!_validateServicosTab()) {
+      _showValidationError('Adicione pelo menos um serviço antes de enviar.');
+      return;
+    }
+
+    // Valida telefone
+    final telefone = _phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (telefone.isEmpty || telefone.length < 10) {
+      _showValidationError('Telefone inválido. Verifique o número do cliente.');
+      return;
+    }
+
+    setState(() {
+      _isSendingWhatsApp = true;
+    });
+
+    try {
+      // Monta a mensagem
+      final mensagem = _buildWhatsAppMessage();
+
+      // Codifica a mensagem para URL
+      final encodedMessage = Uri.encodeComponent(mensagem);
+
+      // Monta a URL do WhatsApp
+      final whatsappUrl = 'https://wa.me/55$telefone?text=$encodedMessage';
+
+      // Tenta abrir o WhatsApp
+      final uri = Uri.parse(whatsappUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('WhatsApp aberto com sucesso!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      } else {
+        throw Exception('Não foi possível abrir o WhatsApp');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _showValidationError('Erro ao abrir WhatsApp: ${e.toString()}');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSendingWhatsApp = false;
+        });
+      }
+    }
+  }
+
+  String _buildWhatsAppMessage() {
+    final clienteNome = _clientNameController.text.trim();
+    final veiculo = _vehicleModelController.text.trim();
+    final placa = _plateController.text.trim().toUpperCase();
+    
+    final buffer = StringBuffer();
+    
+    // Cabeçalho
+    buffer.writeln('🚗 *AUTOSMART - ORÇAMENTO*');
+    buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
+    buffer.writeln();
+    
+    // Dados do cliente
+    buffer.writeln('👤 *Cliente:* $clienteNome');
+    buffer.writeln('🚙 *Veículo:* $veiculo');
+    buffer.writeln('🔖 *Placa:* $placa');
+    buffer.writeln();
+    buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
+    buffer.writeln();
+    
+    // Peças
+    if (_partsList.isNotEmpty) {
+      buffer.writeln('🔧 *PEÇAS:*');
+      buffer.writeln();
+      for (var i = 0; i < _partsList.length; i++) {
+        final part = _partsList[i];
+        final nome = part['name']!.text.trim();
+        final valor = part['value']!.text.trim();
+        buffer.writeln('${i + 1}. $nome');
+        buffer.writeln('   💰 $valor');
+        if (i < _partsList.length - 1) buffer.writeln();
+      }
+      buffer.writeln();
+      buffer.writeln('*Subtotal Peças:* ${_totalPartsController.text}');
+      buffer.writeln();
+      buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
+      buffer.writeln();
+    }
+    
+    // Serviços
+    if (_serviceList.isNotEmpty) {
+      buffer.writeln('⚙️ *SERVIÇOS:*');
+      buffer.writeln();
+      for (var i = 0; i < _serviceList.length; i++) {
+        final service = _serviceList[i];
+        final nome = service['name']!.text.trim();
+        final valor = service['value']!.text.trim();
+        buffer.writeln('${i + 1}. $nome');
+        buffer.writeln('   💰 $valor');
+        if (i < _serviceList.length - 1) buffer.writeln();
+      }
+      buffer.writeln();
+      buffer.writeln('*Subtotal Serviços:* ${_totalServicesController.text}');
+      buffer.writeln();
+      buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
+      buffer.writeln();
+    }
+    
+    // Total geral
+    buffer.writeln('💵 *TOTAL DO ORÇAMENTO:* ${_grandTotalController.text}');
+    buffer.writeln();
+    buffer.writeln('━━━━━━━━━━━━━━━━━━━━━');
+    buffer.writeln();
+    buffer.writeln('📅 *Validade:* 7 dias');
+    buffer.writeln();
+    buffer.writeln('_Orçamento gerado pelo sistema AUTOSMART_');
+    
+    return buffer.toString();
+  }
+
   Future<void> _fetchCliente(String cpfDigits) async {
     setState(() {
       _isFetchingCliente = true;
@@ -918,6 +1056,41 @@ class _BudgetScreenState extends State<BudgetScreen> {
                         ],
                       ),
                     ),
+                  // Botão Enviar via WhatsApp (apenas na aba SERVIÇOS)
+                  if (_selectedServiceType == 'SERVIÇOS') ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _isSendingWhatsApp ? null : _sendBudgetViaWhatsApp,
+                        icon: _isSendingWhatsApp
+                            ? const SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Icon(Icons.chat, color: Colors.white),
+                        label: Text(
+                          _isSendingWhatsApp ? 'Enviando...' : 'Enviar Orçamento via WhatsApp',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF25D366), // Cor oficial do WhatsApp
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
