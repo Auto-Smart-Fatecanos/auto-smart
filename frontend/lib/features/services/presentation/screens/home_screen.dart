@@ -21,7 +21,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedTabIndex = 0;
   int _selectedBottomIndex = 0;
-  final List<String> _tabs = ['PENDENTES', 'EM MANUTENÇÃO', 'FINALIZADOS'];
+  final List<String> _tabs = ['AGUARDANDO', 'EXECUTANDO', 'FINALIZADOS'];
 
   List<OrcamentoModel> _orcamentos = [];
   bool _isLoading = true;
@@ -36,14 +36,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Map<String, dynamic> _mapStatusToDisplay(String status) {
     switch (status.toUpperCase()) {
-      case 'PENDENTE':
+      case 'AGUARDANDO':
         return {
-          'text': 'PENDENTE',
+          'text': 'AGUARDANDO',
           'color': Colors.orange,
         };
-      case 'EM_MANUTENCAO':
+      case 'EXECUTANDO':
         return {
-          'text': 'EM MANUTENÇÃO',
+          'text': 'EXECUTANDO',
           'color': Colors.blue,
         };
       case 'REPROVADO':
@@ -71,11 +71,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool _matchesFilter(String status, int filterIndex) {
     switch (filterIndex) {
-      case 0: // PENDENTES
-        return status.toUpperCase() == 'PENDENTE' || status.toUpperCase() == 'SERVICO_EXTERNO';
-      case 1: // EM MANUTENÇÃO
-        return status.toUpperCase() == 'EM_MANUTENCAO';
-      case 2: // APROVADOS
+      case 0: // AGUARDANDO
+        return status.toUpperCase() == 'AGUARDANDO' || status.toUpperCase() == 'SERVICO_EXTERNO';
+      case 1: // EXECUTANDO
+        return status.toUpperCase() == 'EXECUTANDO';
+      case 2: // FINALIZADOS
         return status.toUpperCase() == 'FINALIZADO';
       default:
         return false;

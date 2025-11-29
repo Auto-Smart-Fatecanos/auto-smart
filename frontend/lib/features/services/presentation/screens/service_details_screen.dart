@@ -44,16 +44,16 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
   final OrcamentoRepositoryImpl _repository = OrcamentoRepositoryImpl();
 
   final Map<String, String> _statusMap = {
-    'PENDENTE': 'PENDENTE',
-    'EM_MANUTENCAO': 'EM MANUTENÇÃO',
+    'AGUARDANDO': 'AGUARDANDO',
+    'EXECUTANDO': 'EXECUTANDO',
     'REPROVADO': 'REPROVADO',
     'FINALIZADO': 'FINALIZADO',
     'SERVICO_EXTERNO': 'SERVIÇO EXTERNO',
   };
 
   final Map<String, Color> _statusColorMap = {
-    'PENDENTE': Colors.orange,
-    'EM_MANUTENCAO': Colors.blue,
+    'AGUARDANDO': Colors.orange,
+    'EXECUTANDO': Colors.blue,
     'REPROVADO': Colors.red,
     'FINALIZADO': Colors.green,
     'SERVICO_EXTERNO': Colors.purple,
@@ -105,14 +105,14 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
 
   Map<String, dynamic> _mapStatusToDisplay(String status) {
     switch (status.toUpperCase()) {
-      case 'PENDENTE':
+      case 'AGUARDANDO':
         return {
-          'text': 'PENDENTE',
+          'text': 'AGUARDANDO',
           'color': Colors.orange,
         };
-      case 'EM_MANUTENCAO':
+      case 'EXECUTANDO':
         return {
-          'text': 'EM MANUTENÇÃO',
+          'text': 'EXECUTANDO',
           'color': Colors.blue,
         };
       case 'REPROVADO':
@@ -141,7 +141,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
   String _getStatusKey(String displayStatus) {
     return _statusMap.entries
         .firstWhere((e) => e.value == displayStatus,
-            orElse: () => MapEntry('PENDENTE', displayStatus))
+            orElse: () => MapEntry('AGUARDANDO', displayStatus))
         .key;
   }
 
