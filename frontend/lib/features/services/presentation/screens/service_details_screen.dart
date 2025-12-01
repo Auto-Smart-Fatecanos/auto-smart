@@ -51,6 +51,8 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
   List<OrcamentoItemModel> _currentServicos = [];
   List<OrcamentoItemModel> _editedPecas = [];
   List<OrcamentoItemModel> _editedServicos = [];
+  final Map<int, TextEditingController> _pecaValueControllers = {};
+  final Map<int, TextEditingController> _servicoValueControllers = {};
   final OrcamentoRepositoryImpl _repository = OrcamentoRepositoryImpl();
   final ChecklistRepositoryImpl _checklistRepository = ChecklistRepositoryImpl();
   final ImagePicker _picker = ImagePicker();
@@ -85,8 +87,46 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
     _currentServicos = List.from(widget.servicos);
     _editedPecas = List.from(widget.pecas);
     _editedServicos = List.from(widget.servicos);
+    _initializeValueControllers();
     _loadOrcamentoData();
     _loadChecklists();
+  }
+
+  void _initializeValueControllers() {
+    // Dispose existing controllers
+    for (var controller in _pecaValueControllers.values) {
+      controller.dispose();
+    }
+    for (var controller in _servicoValueControllers.values) {
+      controller.dispose();
+    }
+    
+    // Clear maps
+    _pecaValueControllers.clear();
+    _servicoValueControllers.clear();
+    
+    // Create new controllers
+    for (int i = 0; i < _editedPecas.length; i++) {
+      _pecaValueControllers[i] = TextEditingController(
+        text: _editedPecas[i].valor.toStringAsFixed(2).replaceAll('.', ','),
+      );
+    }
+    for (int i = 0; i < _editedServicos.length; i++) {
+      _servicoValueControllers[i] = TextEditingController(
+        text: _editedServicos[i].valor.toStringAsFixed(2).replaceAll('.', ','),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    for (var controller in _pecaValueControllers.values) {
+      controller.dispose();
+    }
+    for (var controller in _servicoValueControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
   }
 
   Future<void> _loadOrcamentoData() async {
@@ -114,6 +154,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
             _selectedStatus = _currentStatus;
             _editedPecas = List.from(_currentPecas);
             _editedServicos = List.from(_currentServicos);
+            _initializeValueControllers();
           }
         });
       }
@@ -277,6 +318,26 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
           ativo: !_editedServicos[index].ativo,
         );
       }
+    });
+  }
+
+  void _updatePecaValue(int index, String value) {
+    final cleanedValue = value.replaceAll(',', '.').replaceAll(RegExp(r'[^0-9.]'), '');
+    final doubleValue = double.tryParse(cleanedValue) ?? 0.0;
+    
+    setState(() {
+      _editedPecas = List.from(_editedPecas);
+      _editedPecas[index] = _editedPecas[index].copyWith(valor: doubleValue);
+    });
+  }
+
+  void _updateServicoValue(int index, String value) {
+    final cleanedValue = value.replaceAll(',', '.').replaceAll(RegExp(r'[^0-9.]'), '');
+    final doubleValue = double.tryParse(cleanedValue) ?? 0.0;
+    
+    setState(() {
+      _editedServicos = List.from(_editedServicos);
+      _editedServicos[index] = _editedServicos[index].copyWith(valor: doubleValue);
     });
   }
 
@@ -834,19 +895,75 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                                 ),
                               ),
                             ),
-                            Text(
-                              'R\$ ${peca.valor.toStringAsFixed(2).replaceAll('.', ',')}',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: peca.ativo
-                                    ? AppColors.textPrimary
-                                    : AppColors.textSecondary,
-                                decoration: peca.ativo
-                                    ? TextDecoration.none
-                                    : TextDecoration.lineThrough,
+                            if (_isEditing)
+                              SizedBox(
+                                width: 100,
+                                child: TextField(
+                                  controller: _pecaValueControllers[index],
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  textAlign: TextAlign.right,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: peca.ativo
+                                        ? AppColors.textPrimary
+                                        : AppColors.textSecondary,
+                                  ),
+                                  decoration: InputDecoration(
+                                    prefixText: 'R\$ ',
+                                    prefixStyle: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: peca.ativo
+                                          ? AppColors.textPrimary
+                                          : AppColors.textSecondary,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide(
+                                        color: peca.ativo
+                                            ? AppColors.primary
+                                            : Colors.grey,
+                                      ),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide(
+                                        color: peca.ativo
+                                            ? AppColors.primary
+                                            : Colors.grey,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide(
+                                        color: AppColors.primary,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 8,
+                                    ),
+                                    isDense: true,
+                                  ),
+                                  onChanged: (value) => _updatePecaValue(index, value),
+                                ),
+                              )
+                            else
+                              Text(
+                                'R\$ ${peca.valor.toStringAsFixed(2).replaceAll('.', ',')}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: peca.ativo
+                                      ? AppColors.textPrimary
+                                      : AppColors.textSecondary,
+                                  decoration: peca.ativo
+                                      ? TextDecoration.none
+                                      : TextDecoration.lineThrough,
+                                ),
                               ),
-                            ),
                           ],
                         ),
                       );
@@ -894,19 +1011,75 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                                 ),
                               ),
                             ),
-                            Text(
-                              'R\$ ${servico.valor.toStringAsFixed(2).replaceAll('.', ',')}',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: servico.ativo
-                                    ? AppColors.textPrimary
-                                    : AppColors.textSecondary,
-                                decoration: servico.ativo
-                                    ? TextDecoration.none
-                                    : TextDecoration.lineThrough,
+                            if (_isEditing)
+                              SizedBox(
+                                width: 100,
+                                child: TextField(
+                                  controller: _servicoValueControllers[index],
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  textAlign: TextAlign.right,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: servico.ativo
+                                        ? AppColors.textPrimary
+                                        : AppColors.textSecondary,
+                                  ),
+                                  decoration: InputDecoration(
+                                    prefixText: 'R\$ ',
+                                    prefixStyle: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: servico.ativo
+                                          ? AppColors.textPrimary
+                                          : AppColors.textSecondary,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide(
+                                        color: servico.ativo
+                                            ? AppColors.primary
+                                            : Colors.grey,
+                                      ),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide(
+                                        color: servico.ativo
+                                            ? AppColors.primary
+                                            : Colors.grey,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide(
+                                        color: AppColors.primary,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 8,
+                                    ),
+                                    isDense: true,
+                                  ),
+                                  onChanged: (value) => _updateServicoValue(index, value),
+                                ),
+                              )
+                            else
+                              Text(
+                                'R\$ ${servico.valor.toStringAsFixed(2).replaceAll('.', ',')}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: servico.ativo
+                                      ? AppColors.textPrimary
+                                      : AppColors.textSecondary,
+                                  decoration: servico.ativo
+                                      ? TextDecoration.none
+                                      : TextDecoration.lineThrough,
+                                ),
                               ),
-                            ),
                           ],
                         ),
                       );

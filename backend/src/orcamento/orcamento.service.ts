@@ -89,12 +89,30 @@ export class OrcamentoService {
 
   async remove(id: number): Promise<Orcamento> {
     return this.prisma.$transaction(async (tx) => {
-      // Primeiro delta os itens do orçamento ---------
+
+      const checklists = await tx.checklist.findMany({
+        where: { orcamentoId: id },
+        include: { checklistItems: true },
+      });
+
+
+      for (const checklist of checklists) {
+        await tx.chekListPhotos.deleteMany({
+          where: { checklistId: checklist.id },
+        });
+      }
+
+
+      await tx.checklist.deleteMany({
+        where: { orcamentoId: id },
+      });
+
+
       await tx.orcamentoItem.deleteMany({
         where: { orcamentoId: id },
       });
 
-      // Depois delata o orçamento --------
+
       return tx.orcamento.delete({ where: { id } });
     });
   }
