@@ -56,6 +56,7 @@ class ServiceCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 child: vehiclePhotoPath != null && vehiclePhotoPath!.isNotEmpty
                     ? AuthenticatedImageWidget(
+                        key: ValueKey('$id-$vehiclePhotoPath'),
                         path: vehiclePhotoPath!,
                         fit: BoxFit.cover,
                         isOrcamento: true,

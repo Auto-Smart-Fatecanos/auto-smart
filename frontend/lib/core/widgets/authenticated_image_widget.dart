@@ -37,6 +37,17 @@ class _AuthenticatedImageWidgetState extends State<AuthenticatedImageWidget> {
     _loadImage();
   }
 
+  @override
+  void didUpdateWidget(AuthenticatedImageWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.path != widget.path || oldWidget.isOrcamento != widget.isOrcamento) {
+      _imageBytes = null;
+      _isLoading = true;
+      _hasError = false;
+      _loadImage();
+    }
+  }
+
   Future<void> _loadImage() async {
     try {
       final String imageUrl;

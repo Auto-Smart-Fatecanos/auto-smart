@@ -220,6 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     .toList();
 
                                 return ServiceCard(
+                                  key: ValueKey('orcamento-${orcamento.id}'),
                                   id: orcamento.id?.toString() ?? 'N/A',
                                   title: orcamento.modelo,
                                   subtitle: orcamento.cliente?.nome ??
