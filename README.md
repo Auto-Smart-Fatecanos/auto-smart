@@ -49,7 +49,7 @@ Sistema completo para gestão de serviços automotivos, permitindo controle de o
 cd backend
 npm install
 cp .env.example .env
-# Configure o .env com credenciais do MySQL
+# Configure o .env com credenciais do PostgreSQL
 npm run start:dev
 ```
 
