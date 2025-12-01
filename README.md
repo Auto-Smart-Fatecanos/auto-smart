@@ -1,13 +1,14 @@
 # 📱 AUTOSMART App - Sistema de Gestão de Serviços
 
 <div align="center">
-  <img src="frontend/assets/images/logo.png" alt="AUTOSMART App Logo" width="120" height="120">
+  <img src="frontend/assets/images/logo.png" alt="AUTOSMART App Logo" width="150" height="150">
   
   **Aplicação mobile para gestão de serviços automotivos**
   
   [![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
   [![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)](https://nestjs.com)
-  [![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://mysql.com)
+  [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org)
+
 </div>
 
 ---
@@ -29,8 +30,8 @@ Sistema completo para gestão de serviços automotivos, permitindo controle de o
 ## 🛠️ Tecnologias
 
 **Frontend:** Flutter + Material Design 3  
-**Backend:** NestJS + TypeORM  
-**Banco de Dados:** MySQL  
+**Backend:** NestJS + Prisma 
+**Banco de Dados:** Postgres
 **Autenticação:** JWT
 
 ## 📦 Instalação
@@ -39,7 +40,7 @@ Sistema completo para gestão de serviços automotivos, permitindo controle de o
 
 - Flutter SDK (3.9.0+)
 - Node.js (18+)
-- MySQL Server
+- PgAdmin 4
 - Git
 
 ### Backend
@@ -62,21 +63,6 @@ flutter pub get
 flutter run
 ```
 
-## ⚙️ Configuração
-
-### Arquivo `.env` (Backend)
-
-```env
-DATABASE_HOST=localhost
-DATABASE_PORT=3306
-DATABASE_USERNAME=root
-DATABASE_PASSWORD=sua_senha
-DATABASE_NAME=autosmart_db
-
-JWT_SECRET=sua_chave_secreta
-JWT_EXPIRES_IN=1d
-```
-
 ### Configuração do Frontend
 
 Edite `frontend/lib/features/auth/data/auth_service.dart`:
@@ -87,26 +73,6 @@ static const String baseUrl = 'http://10.0.2.2:3000/auth';
 
 // Para dispositivo físico (use o IP da sua máquina)
 static const String baseUrl = 'http://192.168.1.100:3000/auth';
-```
-
-## 🏗️ Estrutura do Projeto
-
-```
-📦 AUTOSMART App
-├── 📱 frontend/          # Flutter App
-│   ├── lib/
-│   │   ├── core/        # Componentes e tema
-│   │   ├── features/    # Funcionalidades (auth, services, etc)
-│   │   └── main.dart
-│   └── pubspec.yaml
-│
-└── 🖥️ backend/          # NestJS API
-    ├── src/
-    │   ├── auth/        # Autenticação
-    │   ├── users/       # Usuários
-    │   └── services/    # Serviços
-    ├── .env
-    └── package.json
 ```
 
 ## 🔧 Scripts Úteis
@@ -126,35 +92,6 @@ flutter clean         # Limpar cache
 flutter doctor        # Verificar instalação
 ```
 
-## 📱 Testando
-
-### No Emulador
-```bash
-flutter run
-```
-
-### Em Dispositivo Físico
-```bash
-# Conecte via USB e execute
-flutter run
-```
-
-## 🎯 Roadmap
-
-- [x] Autenticação JWT
-- [x] CRUD de serviços
-- [x] Sistema de orçamentos
-- [x] Check-in de veículos
-- [x] Integração WhatsApp
-- [ ] Notificações push
-- [ ] Relatórios em PDF
-- [ ] Modo offline
-
-## 📚 Documentação
-
-- [Integração Backend](frontend/INTEGRACAO_BACKEND.md) - Guia completo de integração
-- [Componentes](frontend/lib/core/widgets/) - Componentes reutilizáveis
-
 ## 👥 Equipe
 
 Desenvolvido por estudantes do **5º semestre de Desenvolvimento de Software Multiplataforma (DSM)**.
@@ -163,10 +100,3 @@ Desenvolvido por estudantes do **5º semestre de Desenvolvimento de Software Mul
 
 Este projeto está sob a licença MIT.
 
----
-
-<div align="center">
-  <p>⭐ Se este projeto te ajudou, considere dar uma estrela!</p>
-  
-  **Made with ❤️ by DSM Team**
-</div>
