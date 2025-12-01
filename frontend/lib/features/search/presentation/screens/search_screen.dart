@@ -18,18 +18,19 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   int _selectedBottomIndex = 1;
-  final SearchController _searchController = SearchController();
+  final TextEditingController _searchController = TextEditingController();
   final OrcamentoRepositoryImpl _repository = OrcamentoRepositoryImpl();
 
-  List<OrcamentoModel> _allOrcamentos = [];
-  List<OrcamentoModel> _filteredOrcamentos = [];
-  bool _isLoading = true;
+  List<OrcamentoModel> _orcamentos = [];
+  bool _isLoading = false;
+  bool _isSearching = false;
   String? _error;
+  String _lastQuery = '';
 
   @override
   void initState() {
     super.initState();
-    _loadOrcamentos();
+    _loadAllOrcamentos();
   }
 
   @override
@@ -38,17 +39,16 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  Future<void> _loadOrcamentos() async {
+  Future<void> _loadAllOrcamentos() async {
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
     try {
-      final orcamentos = await _repository.findAll(page: 1, limit: 1000);
+      final orcamentos = await _repository.findAll(page: 1, limit: 100);
       setState(() {
-        _allOrcamentos = orcamentos;
-        _filteredOrcamentos = orcamentos;
+        _orcamentos = orcamentos;
         _isLoading = false;
       });
     } catch (e) {
@@ -59,16 +59,44 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-  void _filterByPlaca(String query) {
+  Future<void> _searchByPlaca(String query) async {
+    final trimmedQuery = query.trim();
+    
+    // Se a query for igual à última, não busca novamente
+    if (trimmedQuery == _lastQuery) return;
+    _lastQuery = trimmedQuery;
+
+    // Se a query estiver vazia, carrega todos
+    if (trimmedQuery.isEmpty) {
+      await _loadAllOrcamentos();
+      return;
+    }
+
+    // Se a query tiver menos de 2 caracteres, não busca
+    if (trimmedQuery.length < 2) return;
+
     setState(() {
-      if (query.isEmpty) {
-        _filteredOrcamentos = _allOrcamentos;
-      } else {
-        _filteredOrcamentos = _allOrcamentos.where((orcamento) {
-          return orcamento.placa.toUpperCase().contains(query.toUpperCase());
-        }).toList();
-      }
+      _isSearching = true;
+      _error = null;
     });
+
+    try {
+      // Usa a rota do backend para buscar por placa
+      final orcamentos = await _repository.searchByPlaca(trimmedQuery);
+      if (mounted && _lastQuery == trimmedQuery) {
+        setState(() {
+          _orcamentos = orcamentos;
+          _isSearching = false;
+        });
+      }
+    } catch (e) {
+      if (mounted && _lastQuery == trimmedQuery) {
+        setState(() {
+          _error = 'Erro ao buscar: $e';
+          _isSearching = false;
+        });
+      }
+    }
   }
 
   double _calcularTotalOrcamento(OrcamentoModel orcamento) {
@@ -102,52 +130,74 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ),
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-            child: SearchBar(
+            child: TextField(
               controller: _searchController,
-              hintText: 'Buscar por placa...',
-              hintStyle: WidgetStateProperty.all(
-                TextStyle(
+              decoration: InputDecoration(
+                hintText: 'Buscar por placa...',
+                hintStyle: TextStyle(
                   color: Colors.grey.shade500,
                   fontSize: 15,
                 ),
-              ),
-              textStyle: WidgetStateProperty.all(
-                const TextStyle(
-                  color: Colors.black87,
-                  fontSize: 15,
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.only(left: 12, right: 8),
+                  child: _isSearching
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.grey,
+                          ),
+                        )
+                      : Icon(
+                          Icons.search_rounded,
+                          color: Colors.grey.shade600,
+                        ),
                 ),
-              ),
-              leading: Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: Icon(
-                  Icons.search_rounded,
-                  color: Colors.grey.shade600,
+                prefixIconConstraints: const BoxConstraints(
+                  minWidth: 48,
+                  minHeight: 48,
                 ),
-              ),
-              trailing: [
-                if (_searchController.text.isNotEmpty)
-                  IconButton(
-                    icon: Icon(
-                      Icons.clear_rounded,
-                      color: Colors.grey.shade600,
-                    ),
-                    onPressed: () {
-                      _searchController.clear();
-                      _filterByPlaca('');
-                    },
-                  ),
-              ],
-              padding: const WidgetStatePropertyAll(
-                EdgeInsets.symmetric(horizontal: 8),
-              ),
-              elevation: const WidgetStatePropertyAll(0),
-              backgroundColor: const WidgetStatePropertyAll(Colors.white),
-              shape: WidgetStatePropertyAll(
-                RoundedRectangleBorder(
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(
+                          Icons.clear_rounded,
+                          color: Colors.grey.shade600,
+                        ),
+                        onPressed: () {
+                          _searchController.clear();
+                          _searchByPlaca('');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
                 ),
               ),
-              onChanged: _filterByPlaca,
+              style: const TextStyle(
+                color: Colors.black87,
+                fontSize: 15,
+              ),
+              textCapitalization: TextCapitalization.characters,
+              onChanged: (value) {
+                setState(() {}); // Atualiza o ícone de limpar
+                _searchByPlaca(value);
+              },
             ),
           ),
 
@@ -185,7 +235,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '${_filteredOrcamentos.length}',
+                    '${_orcamentos.length}',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -306,7 +356,7 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
-                onPressed: _loadOrcamentos,
+                onPressed: _loadAllOrcamentos,
                 icon: const Icon(Icons.refresh_rounded),
                 label: const Text('Tentar novamente'),
                 style: ElevatedButton.styleFrom(
@@ -327,7 +377,7 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
 
-    if (_filteredOrcamentos.isEmpty) {
+    if (_orcamentos.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -348,12 +398,13 @@ class _SearchScreenState extends State<SearchScreen> {
             Text(
               _searchController.text.isEmpty
                   ? 'Nenhum orçamento cadastrado'
-                  : 'Nenhum resultado encontrado',
+                  : 'Nenhum resultado para "${_searchController.text}"',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: Colors.grey.shade700,
               ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
@@ -371,13 +422,20 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     return RefreshIndicator(
-      onRefresh: _loadOrcamentos,
+      onRefresh: () async {
+        if (_searchController.text.isEmpty) {
+          await _loadAllOrcamentos();
+        } else {
+          _lastQuery = ''; // Força nova busca
+          await _searchByPlaca(_searchController.text);
+        }
+      },
       color: AppColors.primary,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        itemCount: _filteredOrcamentos.length,
+        itemCount: _orcamentos.length,
         itemBuilder: (context, index) {
-          final orcamento = _filteredOrcamentos[index];
+          final orcamento = _orcamentos[index];
           final total = _calcularTotalOrcamento(orcamento);
           final clienteNome = orcamento.cliente?.nome ?? 'Cliente não informado';
 

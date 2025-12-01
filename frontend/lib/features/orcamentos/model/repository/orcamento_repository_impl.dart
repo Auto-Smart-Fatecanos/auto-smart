@@ -10,6 +10,8 @@ import '../orcamento_model.dart';
 import '../orcamento_item_model.dart';
 import 'orcamento_repository.dart';
 
+export 'orcamento_repository.dart' show EarningsData, EarningsByMonth;
+
 const String _envApiBaseUrl =
     String.fromEnvironment('API_BASE_URL', defaultValue: '');
 
@@ -103,13 +105,79 @@ class OrcamentoRepositoryImpl implements OrcamentoRepository {
     int page = 1,
     int limit = 10,
   }) async {
-    final orcamentos = await findAll(page: page, limit: limit);
-    return orcamentos
-        .where(
-          (orcamento) => orcamento.status.toUpperCase() ==
-              status.trim().toUpperCase(),
-        )
-        .toList();
+    final uri = _buildUri(
+      '/orcamentos',
+      <String, String>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+        'status': status.trim().toUpperCase(),
+      },
+    );
+
+    final response = await _client.get(uri, headers: await _buildHeaders());
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Erro ao buscar orçamentos por status: ${response.statusCode} ${response.reasonPhrase}',
+      );
+    }
+
+    final dynamic decoded = jsonDecode(response.body);
+    if (decoded is Map<String, dynamic> && decoded.containsKey('data')) {
+      final items = decoded['data'] as List<dynamic>;
+      return items
+          .map((item) =>
+              OrcamentoModel.fromJson(item as Map<String, dynamic>))
+          .toList();
+    }
+
+    if (decoded is List) {
+      return decoded
+          .map((item) =>
+              OrcamentoModel.fromJson(item as Map<String, dynamic>))
+          .toList();
+    }
+
+    throw Exception('Formato inesperado da resposta de /orcamentos');
+  }
+
+  @override
+  Future<EarningsData> getEarnings() async {
+    final uri = _buildUri('/orcamentos/ganhos');
+    final response = await _client.get(uri, headers: await _buildHeaders());
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Erro ao buscar ganhos: ${response.statusCode} ${response.reasonPhrase}',
+      );
+    }
+
+    final dynamic decoded = jsonDecode(response.body);
+    if (decoded is Map<String, dynamic>) {
+      return EarningsData.fromJson(decoded);
+    }
+
+    throw Exception('Formato inesperado da resposta de /orcamentos/ganhos');
+  }
+
+  @override
+  Future<List<OrcamentoModel>> searchByPlaca(String placa) async {
+    final uri = _buildUri('/orcamentos/$placa/veiculo');
+    final response = await _client.get(uri, headers: await _buildHeaders());
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Erro ao buscar por placa: ${response.statusCode} ${response.reasonPhrase}',
+      );
+    }
+
+    final dynamic decoded = jsonDecode(response.body);
+    if (decoded is List) {
+      return decoded
+          .map((item) => OrcamentoModel.fromJson(item as Map<String, dynamic>))
+          .toList();
+    }
+
+    throw Exception('Formato inesperado da resposta de /orcamentos/:placa/veiculo');
   }
 
   @override

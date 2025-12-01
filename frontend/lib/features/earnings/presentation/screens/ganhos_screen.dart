@@ -7,7 +7,6 @@ import '../../../services/presentation/screens/home_screen.dart';
 import '../../../search/presentation/screens/search_screen.dart';
 import '../../../profile/presentation/screens/meus_dados_screen.dart';
 import '../../../orcamentos/model/repository/orcamento_repository_impl.dart';
-import '../../../orcamentos/model/orcamento_model.dart';
 
 class GanhosScreen extends StatefulWidget {
   const GanhosScreen({super.key});
@@ -24,7 +23,6 @@ class _GanhosScreenState extends State<GanhosScreen>
 
   bool _isLoading = true;
   double _totalGanhos = 0.0;
-  int _totalServicos = 0;
   String? _error;
   Map<int, double> _ganhosPorMes = {};
 
@@ -57,14 +55,8 @@ class _GanhosScreenState extends State<GanhosScreen>
     });
 
     try {
-      final orcamentosFinalizados = await _repository.findByStatus(
-        'FINALIZADO',
-        page: 1,
-        limit: 1000,
-      );
+      final earningsData = await _repository.getEarnings();
 
-      double total = 0.0;
-      int servicos = 0;
       Map<int, double> ganhosMes = {};
 
       // Inicializar últimos 6 meses com 0
@@ -74,25 +66,15 @@ class _GanhosScreenState extends State<GanhosScreen>
         ganhosMes[mes.month] = 0.0;
       }
 
-      for (final orcamento in orcamentosFinalizados) {
-        final mesOrcamento = orcamento.dataCriacao?.month ?? now.month;
-        
-        for (final item in orcamento.orcamentoItems) {
-          if (item.ativo) {
-            total += item.valor;
-            servicos++;
-            
-            // Adicionar ao mês correspondente se estiver nos últimos 6 meses
-            if (ganhosMes.containsKey(mesOrcamento)) {
-              ganhosMes[mesOrcamento] = (ganhosMes[mesOrcamento] ?? 0) + item.valor;
-            }
-          }
+      // Preencher com os dados do backend
+      for (final ganhoMes in earningsData.ganhosPorMes) {
+        if (ganhosMes.containsKey(ganhoMes.mes)) {
+          ganhosMes[ganhoMes.mes] = ganhoMes.total;
         }
       }
 
       setState(() {
-        _totalGanhos = total;
-        _totalServicos = servicos;
+        _totalGanhos = earningsData.totalGanhos;
         _ganhosPorMes = ganhosMes;
         _isLoading = false;
       });
@@ -356,29 +338,6 @@ class _GanhosScreenState extends State<GanhosScreen>
               fontWeight: FontWeight.bold,
               color: Colors.white,
               letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  '$_totalServicos serviços finalizados',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
             ),
           ),
         ],

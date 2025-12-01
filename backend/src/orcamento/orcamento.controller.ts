@@ -71,6 +71,49 @@ export class OrcamentoController {
     );
   }
 
+  @Get()
+  @ApiOperation({
+    summary: 'Lista todos os orçamentos com paginação',
+  })
+  @ApiQuery({ name: 'page', required: false, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, example: 10 })
+  @ApiQuery({ name: 'status', required: false, enum: Status, description: 'Filtrar por status' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de orçamentos retornada com sucesso',
+  })
+  async findAll(
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+    @Query('status') status?: Status,
+  ): Promise<{
+    data: Orcamento[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    if (status) {
+      return this.orcamentoService.findByStatus(status, Number(page), Number(limit));
+    }
+    return this.orcamentoService.findAll(Number(page), Number(limit));
+  }
+
+  @Get('ganhos')
+  @ApiOperation({
+    summary: 'Retorna os ganhos totais dos orçamentos finalizados',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Ganhos retornados com sucesso',
+  })
+  async getEarnings(): Promise<{
+    totalGanhos: number;
+    totalServicos: number;
+    ganhosPorMes: { mes: number; ano: number; total: number }[];
+  }> {
+    return this.orcamentoService.getEarnings();
+  }
+
   @Get(':nome/foto')
   @ApiOperation({
     summary: 'Retorna a foto do veículo do orçamento',
@@ -97,28 +140,6 @@ export class OrcamentoController {
   @ApiResponse({ status: 404, description: 'Orçamento não encontrado' })
   async findOne(@Param('id') id: number): Promise<Orcamento | null> {
     return this.orcamentoService.findOne(Number(id));
-  }
-
-  @Get()
-  @ApiOperation({
-    summary: 'Lista todos os orçamentos com paginação',
-  })
-  @ApiQuery({ name: 'page', required: false, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, example: 10 })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de orçamentos retornada com sucesso',
-  })
-  async findAll(
-    @Query('page') page = 1,
-    @Query('limit') limit = 10,
-  ): Promise<{
-    data: Orcamento[];
-    total: number;
-    page: number;
-    limit: number;
-  }> {
-    return this.orcamentoService.findAll(Number(page), Number(limit));
   }
 
   @Get(':placa/veiculo')

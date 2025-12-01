@@ -80,6 +80,80 @@ export class OrcamentoService {
     return { data, total, page, limit };
   }
 
+  async findByStatus(
+    status: Status,
+    page: number,
+    limit: number,
+  ): Promise<{
+    data: Orcamento[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.orcamento.findMany({
+        where: { status },
+        skip,
+        take: limit,
+        orderBy: { id: 'desc' },
+        include: { orcamentoItems: true, cliente: true },
+      }),
+      this.prisma.orcamento.count({ where: { status } }),
+    ]);
+
+    return { data, total, page, limit };
+  }
+
+  async getEarnings(): Promise<{
+    totalGanhos: number;
+    totalServicos: number;
+    ganhosPorMes: { mes: number; ano: number; total: number }[];
+  }> {
+    // Buscar todos os orçamentos finalizados
+    const orcamentosFinalizados = await this.prisma.orcamento.findMany({
+      where: { status: Status.FINALIZADO },
+      include: { orcamentoItems: true },
+    });
+
+    let totalGanhos = 0;
+    let totalServicos = 0;
+    const ganhosPorMesMap = new Map<string, { mes: number; ano: number; total: number }>();
+
+    // Inicializar últimos 6 meses
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${date.getFullYear()}-${date.getMonth() + 1}`;
+      ganhosPorMesMap.set(key, { mes: date.getMonth() + 1, ano: date.getFullYear(), total: 0 });
+    }
+
+    for (const orcamento of orcamentosFinalizados) {
+      const dataOrcamento = orcamento.dataCriacao;
+      const mesKey = `${dataOrcamento.getFullYear()}-${dataOrcamento.getMonth() + 1}`;
+
+      for (const item of orcamento.orcamentoItems) {
+        if (item.ativo) {
+          totalGanhos += item.orcamentoValor;
+          totalServicos++;
+
+          // Adicionar ao mês correspondente se estiver nos últimos 6 meses
+          if (ganhosPorMesMap.has(mesKey)) {
+            const entry = ganhosPorMesMap.get(mesKey)!;
+            entry.total += item.orcamentoValor;
+          }
+        }
+      }
+    }
+
+    return {
+      totalGanhos,
+      totalServicos,
+      ganhosPorMes: Array.from(ganhosPorMesMap.values()),
+    };
+  }
+
   async findOne(id: number): Promise<Orcamento | null> {
     return this.prisma.orcamento.findUnique({
       where: { id },

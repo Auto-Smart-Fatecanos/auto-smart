@@ -8,6 +8,7 @@ import '../../../../core/widgets/confirmation_dialog.dart';
 import '../../../../core/widgets/authenticated_image_widget.dart';
 import '../../../../core/widgets/image_source_dialog.dart';
 import '../../../../core/theme/colors.dart';
+import '../../../../core/services/whatsapp_service.dart';
 import '../../../checkin/presentation/screens/checkin_screen.dart';
 import '../../../checkin/presentation/screens/checkout_screen.dart';
 import '../../../checkin/presentation/screens/view_checklist_screen.dart';
@@ -456,7 +457,9 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
 
       final statusKey = _getStatusKey(_selectedStatus);
       final originalStatusKey = _getStatusKey(_currentStatus);
-      if (statusKey != originalStatusKey) {
+      final statusChanged = statusKey != originalStatusKey;
+      
+      if (statusChanged) {
         await _repository.updateStatus(orcamentoId, statusKey);
       }
 
@@ -480,7 +483,14 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
           ),
         );
 
-        Navigator.pop(context, true);
+        // Se o status mudou, pergunta se quer notificar o cliente
+        if (statusChanged && mounted) {
+          await _askToNotifyClient(statusKey);
+        }
+
+        if (mounted) {
+          Navigator.pop(context, true);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -497,6 +507,134 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
           _isSaving = false;
         });
       }
+    }
+  }
+
+  Future<void> _askToNotifyClient(String newStatus) async {
+    // Verifica se tem telefone válido
+    final phone = widget.phone;
+    if (phone.isEmpty || phone.replaceAll(RegExp(r'[^0-9]'), '').length < 10) {
+      return; // Não mostra o diálogo se não tiver telefone válido
+    }
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF25D366),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.phone_android,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Notificar Cliente',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Deseja enviar uma notificação via WhatsApp informando o cliente sobre a alteração de status?',
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.person, size: 20, color: Colors.grey.shade700),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.clientName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+            child: Text(
+              'Não',
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.pop(context, true),
+            icon: const Icon(Icons.send_rounded, size: 20),
+            label: const Text(
+              'Enviar WhatsApp',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF25D366),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true && mounted) {
+      // Extrai o modelo do título (formato: "PLACA - MODELO")
+      final titleParts = widget.title.split(' - ');
+      final plate = titleParts.isNotEmpty ? titleParts[0] : widget.title;
+      final model = titleParts.length > 1 ? titleParts[1] : widget.title;
+
+      await WhatsAppService.sendStatusChangeNotification(
+        context: context,
+        phone: phone,
+        clientName: widget.clientName,
+        vehicleModel: model,
+        plate: plate,
+        oldStatus: _currentStatus,
+        newStatus: newStatus,
+      );
     }
   }
 
