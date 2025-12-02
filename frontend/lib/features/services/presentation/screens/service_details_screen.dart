@@ -1271,10 +1271,14 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                             onPressed: _isSaving ? null : _deleteOrcamento,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.red,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
+                              minimumSize: const Size(0, 48),
                             ),
                             child: _isSaving
                                 ? const SizedBox(
@@ -1286,12 +1290,18 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                                           Colors.white),
                                     ),
                                   )
-                                : const Text(
-                                    'Excluir orçamento',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
+                                : FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: const Padding(
+                                      padding: EdgeInsets.symmetric(horizontal: 4),
+                                      child: Text(
+                                        'Excluir orçamento',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                                     ),
                                   ),
                           ),
@@ -1302,10 +1312,14 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                             onPressed: _isSaving ? null : _saveChanges,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
+                              minimumSize: const Size(0, 48),
                             ),
                             child: _isSaving
                                 ? const SizedBox(
@@ -1317,12 +1331,18 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                                           Colors.white),
                                     ),
                                   )
-                                : const Text(
-                                    'Salvar',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
+                                : FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: const Padding(
+                                      padding: EdgeInsets.symmetric(horizontal: 4),
+                                      child: Text(
+                                        'Salvar',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
                                     ),
                                   ),
                           ),
@@ -1368,16 +1388,17 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                       final checkin = _getChecklistByTipo('CHECK_IN');
                       final hasCheckin = checkin != null;
                       final orcamentoId = int.tryParse(widget.id);
+                    
+                      final canCreateCheckin = _canEditOrcamento() && !hasCheckin && orcamentoId != null;
 
                       return InkWell(
-                        onTap: hasCheckin || orcamentoId == null
-                            ? null
-                            : () async {
+                        onTap: canCreateCheckin
+                            ? () async {
                                 final result = await Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => CheckinScreen(
-                                      orcamentoId: orcamentoId,
+                                      orcamentoId: orcamentoId!,
                                       vehicleTitle: widget.title,
                                       clientName: widget.clientName,
                                     ),
@@ -1387,10 +1408,11 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                                   _loadChecklists();
                                   _loadOrcamentoData();
                                 }
-                              },
+                              }
+                            : null,
                         borderRadius: BorderRadius.circular(8),
                         child: Opacity(
-                          opacity: hasCheckin ? 0.6 : 1.0,
+                          opacity: canCreateCheckin ? 1.0 : 0.6,
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             child: Row(
@@ -1428,7 +1450,9 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                                             child: Text(
                                               hasCheckin
                                                   ? _formatDate(checkin?.dataCriacao)
-                                                  : 'Clique para fazer check-in',
+                                                  : canCreateCheckin
+                                                      ? 'Clique para fazer check-in'
+                                                      : 'Check-in não disponível',
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w600,
@@ -1471,7 +1495,8 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                                     ],
                                   ),
                                 ),
-                                if (!hasCheckin)
+                                // Só mostra a seta se pode criar novo check-in
+                                if (canCreateCheckin)
                                   const Icon(
                                     Icons.arrow_forward_ios,
                                     size: 16,
@@ -1501,17 +1526,17 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                       final hasCheckin = checkin != null;
                       final hasCheckout = checkout != null;
                       final orcamentoId = int.tryParse(widget.id);
-                      final canDoCheckout = hasCheckin && !hasCheckout && orcamentoId != null;
+                      // Só pode criar novo check-out se não estiver finalizado/recusado, tiver check-in e não tiver check-out
+                      final canCreateCheckout = _canEditOrcamento() && hasCheckin && !hasCheckout && orcamentoId != null;
 
                       return InkWell(
-                        onTap: !canDoCheckout
-                            ? null
-                            : () async {
+                        onTap: canCreateCheckout
+                            ? () async {
                                 final result = await Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => CheckoutScreen(
-                                      orcamentoId: orcamentoId,
+                                      orcamentoId: orcamentoId!,
                                       vehicleTitle: widget.title,
                                       clientName: widget.clientName,
                                     ),
@@ -1521,10 +1546,11 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                                   _loadChecklists();
                                   _loadOrcamentoData();
                                 }
-                              },
+                              }
+                            : null,
                         borderRadius: BorderRadius.circular(8),
                         child: Opacity(
-                          opacity: hasCheckout ? 0.6 : 1.0,
+                          opacity: canCreateCheckout ? 1.0 : 0.6,
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             child: Row(
@@ -1564,7 +1590,9 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                                                   ? _formatDate(checkout?.dataCriacao)
                                                   : !hasCheckin
                                                       ? 'Aguardando check-in'
-                                                      : 'Clique para fazer check-out',
+                                                      : canCreateCheckout
+                                                          ? 'Clique para fazer check-out'
+                                                          : 'Check-out não disponível',
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w600,
@@ -1607,7 +1635,8 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                                     ],
                                   ),
                                 ),
-                                if (canDoCheckout)
+                                // Só mostra a seta se pode criar novo check-out
+                                if (canCreateCheckout)
                                   const Icon(
                                     Icons.arrow_forward_ios,
                                     size: 16,
